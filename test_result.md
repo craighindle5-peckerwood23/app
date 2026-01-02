@@ -229,27 +229,27 @@ backend:
 
   - task: "User API - POST /api/user/register"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/user.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "User registration with password hashing"
+        comment: "Tested - Returns JWT token and user object"
 
   - task: "User API - POST /api/user/login"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/user.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "User login with JWT"
+        comment: "Tested - Returns JWT token, works with GET /api/user/me"
 
   - task: "Processing API - POST /api/process/:orderId"
     implemented: true
