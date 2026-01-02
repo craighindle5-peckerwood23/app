@@ -1,0 +1,152 @@
+{
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "core_philosophy": "Fusion over Imitation. Emotion First. Content is King.",
+    "anti_patterns": [
+      "Generic 'SaaS Blue' gradients",
+      "Inter font for headings",
+      "Centered layouts without tension",
+      "Low contrast gray-on-gray text"
+    ]
+  },
+  "typography": {
+    "headings": {
+      "family": "Manrope",
+      "weights": ["600", "800"],
+      "usage": "Main titles, section headers, hero text",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "family": "IBM Plex Sans",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, UI labels, data tables",
+      "letter_spacing": "tracking-normal"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "usage": "Code snippets, API keys, order IDs"
+    },
+    "installation": "Import from Google Fonts in index.css: @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@400;600;800&family=JetBrains+Mono:wght@400&display=swap');"
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Slate Ink",
+        "hex": "#0F172A",
+        "tailwind": "slate-900"
+      },
+      "background": {
+        "name": "Paper White",
+        "hex": "#FFFFFF",
+        "alt": "#F8FAFC"
+      },
+      "accent": {
+        "name": "Digital Blue",
+        "hex": "#3B82F6",
+        "tailwind": "blue-500"
+      },
+      "destructive": {
+        "name": "Shred Red",
+        "hex": "#EF4444",
+        "tailwind": "red-500"
+      }
+    },
+    "theme_strategy": "Light Mode Dominant (Paper Metaphor). Dark Mode Optional (Inverted Blueprint).",
+    "rules": [
+      "Never use pure black (#000000). Use Slate-900.",
+      "Backgrounds should have texture (noise) rather than flat color where possible.",
+      "Primary action buttons must be solid Slate-900 or Blue-500."
+    ]
+  },
+  "visual_enhancers": {
+    "texture": "Add a subtle noise overlay to the body background to simulate high-quality paper.",
+    "borders": "Use 'Grid Borders' style: 1px solid border-slate-200. Sharp edges or minimal rounding (rounded-sm).",
+    "shadows": "Use 'Cut Paper' shadows: sharp, directional shadows (e.g., shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]) for buttons and cards.",
+    "glassmorphism": "Use 'Crystal Glass' for sticky headers: bg-white/80 backdrop-blur-md border-b border-slate-200/50."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-slate-900 text-white hover:bg-slate-800 rounded-md shadow-sm font-medium px-6 py-3 transition-all active:scale-95",
+      "secondary": "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-md font-medium px-6 py-3",
+      "accent": "bg-blue-600 text-white hover:bg-blue-700 rounded-md shadow-md hover:shadow-lg transition-all"
+    },
+    "cards": {
+      "style": "bg-white border border-slate-200 rounded-lg p-6 or p-8. No default shadow. Hover: border-slate-300 shadow-sm.",
+      "marketing_card": "bg-slate-50 border border-slate-200 p-8 rounded-xl hover:-translate-y-1 transition-transform duration-300"
+    },
+    "inputs": {
+      "style": "bg-white border border-slate-200 rounded-md h-11 px-4 focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+    }
+  },
+  "layout": {
+    "marketing": {
+      "grid": "The 'Tetris' Grid: grid-cols-1 md:grid-cols-12 gap-8. Use col-span-8 for hero, col-span-4 for supporting visuals.",
+      "spacing": "Generous. Section padding: py-24 or py-32."
+    },
+    "dashboard": {
+      "grid": "The 'Control Room' Grid: grid-cols-1 md:grid-cols-4 gap-6. Dense data, high information density.",
+      "sidebar": "Fixed width (w-64), border-r border-slate-200, bg-slate-50/50."
+    }
+  },
+  "images": {
+    "hero_workspace": {
+      "url": "https://images.unsplash.com/photo-1537655949728-d4e1c7c7bf90?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Minimalist white workspace with laptop",
+      "usage": "Hero section background or side visual"
+    },
+    "texture_paper": {
+      "url": "https://images.unsplash.com/photo-1727195077380-1c0f7e7a3456?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Abstract paper layers",
+      "usage": "Background texture or section divider"
+    },
+    "feature_scanner": {
+      "url": "https://images.unsplash.com/photo-1620423855978-e5d74a7bef30?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Modern digital scanning device",
+      "usage": "Scanning service feature card"
+    },
+    "feature_shredder": {
+      "url": "https://images.unsplash.com/photo-1513705153361-9bc726c8db67?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Shredded paper strips",
+      "usage": "Shredding service feature card"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-200 ease-out",
+    "hover_effects": "Lift on hover (-translate-y-1) for cards. Color shift for buttons.",
+    "loading": "Use a 'scanning' line animation (left to right gradient) for loading states."
+  },
+  "accessibility": {
+    "contrast": "Ensure text is Slate-900 on White, or White on Slate-900. Avoid gray text on gray backgrounds.",
+    "focus": "Visible focus rings (ring-2 ring-offset-2 ring-slate-900) on all interactive elements.",
+    "reduced_motion": "Respect prefers-reduced-motion media query."
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS FIRST: Add the Google Fonts import to index.css immediately.",
+    "2. SETUP TAILWIND: Update tailwind.config.js to include the new colors (slate-900 as primary, etc).",
+    "3. USE SHADCN: Use the provided Shadcn components but OVERRIDE the default styling to match the 'Paper & Ink' aesthetic (sharper corners, higher contrast borders).",
+    "4. NO GRADIENTS: Do not use background gradients. Use solid colors or the provided paper texture images.",
+    "5. DATA-TESTID: Add data-testid to all buttons, inputs, and links.",
+    "6. FILE UPLOAD: This is the core feature. Make the upload area massive, inviting, and textured (dashed border-slate-300 bg-slate-50).",
+    "7. ADMIN DASHBOARD: Keep it strict and grid-based. No floating cards. Use borders to separate data."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use sonner for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
