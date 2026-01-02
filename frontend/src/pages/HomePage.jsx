@@ -1,20 +1,16 @@
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { 
   FileText, FileOutput, Image, ScanText, Scan, Printer, Trash2, 
-  Shield, Zap, Clock, CheckCircle, ArrowRight 
+  Shield, Zap, Clock, CheckCircle, ArrowRight, Scale, Users
 } from "lucide-react";
+import { useServices, getPriceDisplay } from "../hooks/useServices";
 
-const services = [
-  { id: "pdf-to-word", name: "PDF to Word", description: "Convert PDF to editable Word documents", icon: FileText, price: "$2.99" },
-  { id: "word-to-pdf", name: "Word to PDF", description: "Convert Word files to PDF format", icon: FileOutput, price: "$1.99" },
-  { id: "jpg-to-pdf", name: "Image to PDF", description: "Convert images to PDF documents", icon: Image, price: "$1.49" },
-  { id: "ocr", name: "OCR Extraction", description: "Extract text from images & scans", icon: ScanText, price: "$3.99" },
-  { id: "document-scan", name: "Document Scan", description: "Clean & enhance scanned docs", icon: Scan, price: "$2.49" },
-  { id: "pdf-fax", name: "PDF to Fax", description: "Send documents via fax", icon: Printer, price: "$4.99" },
-  { id: "secure-shred", name: "Secure Shred", description: "Permanently destroy documents", icon: Trash2, price: "$1.99" },
-];
+// Icon mapping
+const iconMap = { FileText, FileOutput, Image, ScanText, Scan, Printer, Trash2, Zap, Scale, Users };
+const getIcon = (name) => iconMap[name] || FileText;
 
 const features = [
   { icon: Zap, title: "Lightning Fast", description: "Most files processed in under 30 seconds" },
@@ -23,6 +19,23 @@ const features = [
 ];
 
 const HomePage = () => {
+  // Fetch services from catalog
+  const { services, loading } = useServices();
+  
+  // Get featured services (first 8 conversion/ocr services)
+  const featuredServices = services
+    .filter(s => ['conversion', 'ocr'].includes(s.type))
+    .slice(0, 8);
+  
+  // Get emergency bundles
+  const emergencyBundles = services
+    .filter(s => s.type === 'bundle')
+    .slice(0, 3);
+  
+  // Get grievance services
+  const legalServices = services
+    .filter(s => ['grievance', 'legal'].includes(s.type))
+    .slice(0, 4);
   const homeSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -150,24 +163,31 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((service) => (
-              <Link 
-                key={service.id} 
-                to={`/services/${service.id}`}
-                className="service-card group"
-                data-testid={`service-card-${service.id}`}
-              >
-                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                  <service.icon className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors" />
-                </div>
-                <h3 className="font-semibold text-slate-900 mb-1">{service.name}</h3>
-                <p className="text-sm text-slate-500 mb-3">{service.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-600 font-semibold">{service.price}</span>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                </div>
-              </Link>
-            ))}
+            {loading ? (
+              <div className="col-span-4 text-center py-12 text-slate-500">Loading services...</div>
+            ) : (
+              featuredServices.map((service) => {
+                const IconComponent = getIcon(service.icon);
+                return (
+                  <Link 
+                    key={service.id} 
+                    to={`/services/${service.id}`}
+                    className="service-card group"
+                    data-testid={`service-card-${service.id}`}
+                  >
+                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                      <IconComponent className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors" />
+                    </div>
+                    <h3 className="font-semibold text-slate-900 mb-1">{service.name}</h3>
+                    <p className="text-sm text-slate-500 mb-3">{service.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-600 font-semibold">{getPriceDisplay(service)}</span>
+                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </Link>
+                );
+              })
+            )}
           </div>
 
           <div className="text-center mt-12">
@@ -180,6 +200,71 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Emergency Bundles Section */}
+      {emergencyBundles.length > 0 && (
+        <section className="py-16 bg-slate-900 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge className="bg-yellow-500 text-black mb-4">Priority Processing</Badge>
+              <h2 className="text-3xl font-bold">Emergency & Bundle Services</h2>
+              <p className="mt-2 text-slate-400">Fast-track your urgent document needs</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {emergencyBundles.map(bundle => (
+                <Link 
+                  key={bundle.id}
+                  to={`/services/${bundle.id}`}
+                  className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-colors border border-slate-700"
+                  data-testid={`bundle-${bundle.id}`}
+                >
+                  <Zap className="w-10 h-10 text-yellow-400 mb-4" />
+                  <h3 className="font-semibold text-xl">{bundle.name}</h3>
+                  <p className="text-slate-400 text-sm mt-2 line-clamp-2">{bundle.description}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-2xl font-bold text-yellow-400">${bundle.price.toFixed(2)}</span>
+                    <ArrowRight className="w-5 h-5 text-slate-400" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Legal & Grievance Services */}
+      {legalServices.length > 0 && (
+        <section className="py-16 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-slate-900">Legal & Grievance Services</h2>
+              <p className="mt-2 text-slate-600">Professional document preparation for legal matters</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {legalServices.map(service => (
+                <Link 
+                  key={service.id}
+                  to={`/services/${service.id}`}
+                  className="card-base p-6 card-hover"
+                  data-testid={`legal-${service.id}`}
+                >
+                  <Scale className="w-8 h-8 text-purple-600 mb-4" />
+                  <h3 className="font-semibold text-slate-900">{service.name}</h3>
+                  <p className="text-sm text-slate-500 mt-2 line-clamp-2">{service.description}</p>
+                  <p className="text-purple-600 font-semibold mt-4">${service.price.toFixed(2)}</p>
+                </Link>
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <Link to="/services?type=grievance">
+                <Button variant="outline" className="btn-secondary">
+                  View All Legal Services <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How It Works Section */}
       <section className="py-24 bg-slate-900 text-white">
