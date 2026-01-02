@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, UploadFile, File, Form, Depends, BackgroundTasks
+from fastapi import FastAPI, APIRouter, HTTPException, Request, UploadFile, File, Form, Depends, BackgroundTasks, Query
 from fastapi.responses import FileResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -7,7 +7,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 import httpx
@@ -27,6 +27,18 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import io
 import shutil
+
+# Import the services catalog
+from services_catalog import (
+    SERVICES_CATALOG, 
+    get_service_by_id, 
+    get_services_by_type, 
+    get_services_by_tag,
+    search_services,
+    get_enabled_services,
+    get_price_in_dollars,
+    SERVICE_TYPE_LABELS
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -70,13 +82,31 @@ logger = logging.getLogger(__name__)
 
 # ===================== MODELS =====================
 
-class Service(BaseModel):
+class ServiceResponse(BaseModel):
     id: str
     name: str
+    type: str
     description: str
-    price: float
-    icon: str
-    category: str
+    base_price: int  # in cents
+    price: float  # in dollars (computed)
+    unit: str
+    enabled: bool
+    tags: List[str]
+    includes: Optional[List[str]] = None
+    requires_extra_fields: Optional[List[str]] = None
+    icon: Optional[str] = None
+    estimated_time: Optional[str] = None
+    max_file_size: Optional[int] = None
+    supported_formats: Optional[List[str]] = None
+
+class OrderCreateRequest(BaseModel):
+    service_id: str
+    file_id: str
+    file_name: str
+    customer_email: EmailStr
+    customer_name: str
+    quantity: int = 1
+    extra_fields: Optional[Dict[str, Any]] = None
 
 class OrderCreate(BaseModel):
     service_id: str
@@ -115,18 +145,45 @@ class Analytics(BaseModel):
     conversion_rate: float
     recent_orders: List[dict]
 
-# ===================== SERVICES DATA =====================
+# ===================== SERVICES DATA (Catalog-Driven) =====================
 
-SERVICES = [
-    Service(id="pdf-to-word", name="PDF to Word", description="Convert PDF documents to editable Word files", price=2.99, icon="FileText", category="conversion"),
-    Service(id="word-to-pdf", name="Word to PDF", description="Convert Word documents to PDF format", price=1.99, icon="FileOutput", category="conversion"),
-    Service(id="jpg-to-pdf", name="JPG to PDF", description="Convert images to PDF documents", price=1.49, icon="Image", category="conversion"),
-    Service(id="pdf-to-jpg", name="PDF to JPG", description="Extract images from PDF files", price=1.99, icon="Images", category="conversion"),
-    Service(id="ocr", name="OCR Text Extraction", description="Extract text from images and scanned documents", price=3.99, icon="ScanText", category="extraction"),
-    Service(id="document-scan", name="Document Scanning", description="Clean and enhance scanned documents", price=2.49, icon="Scan", category="scanning"),
-    Service(id="pdf-fax", name="PDF to Fax", description="Send your PDF documents via fax", price=4.99, icon="Printer", category="faxing"),
-    Service(id="secure-shred", name="Secure Shredding", description="Permanently delete documents with certificate", price=1.99, icon="Trash2", category="security"),
-]
+def transform_service_for_api(service: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform catalog service to API response format"""
+    return {
+        **service,
+        "price": service["base_price"] / 100  # Convert cents to dollars
+    }
+
+def calculate_order_price(service: Dict[str, Any], quantity: int = 1) -> float:
+    """Calculate order price based on service type and quantity"""
+    base_price = service["base_price"] / 100  # Convert to dollars
+    
+    if service["type"] == "bundle" or service["unit"] == "flat":
+        # Bundles and flat-rate services don't multiply by quantity
+        return base_price
+    elif service["unit"] == "per_page":
+        return base_price * quantity
+    elif service["unit"] == "per_file":
+        return base_price * quantity
+    elif service["unit"] == "per_mb":
+        return base_price * quantity
+    else:
+        return base_price
+
+def validate_extra_fields(service: Dict[str, Any], extra_fields: Optional[Dict[str, Any]]) -> List[str]:
+    """Validate required extra fields for special service types"""
+    errors = []
+    required = service.get("requires_extra_fields", [])
+    
+    if required and not extra_fields:
+        return [f"Missing required fields: {', '.join(required)}"]
+    
+    if required:
+        for field in required:
+            if field not in extra_fields or not extra_fields[field]:
+                errors.append(f"Missing required field: {field}")
+    
+    return errors
 
 # ===================== HELPER FUNCTIONS =====================
 
@@ -146,13 +203,6 @@ async def get_paypal_access_token():
             logger.error(f"PayPal auth error: {response.text}")
             raise HTTPException(status_code=500, detail="Failed to authenticate with PayPal")
         return response.json()["access_token"]
-
-def get_service_by_id(service_id: str) -> Optional[Service]:
-    """Get service by ID"""
-    for service in SERVICES:
-        if service.id == service_id:
-            return service
-    return None
 
 def verify_token(token: str) -> dict:
     """Verify JWT token"""
@@ -398,19 +448,49 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-# Services Routes
-@api_router.get("/services", response_model=List[Service])
-async def get_services():
-    """Get all available services"""
-    return SERVICES
+# Services Routes (Catalog-Driven)
+@api_router.get("/services")
+async def get_services(
+    type: Optional[str] = Query(None, description="Filter by service type"),
+    tag: Optional[str] = Query(None, description="Filter by tag"),
+    search: Optional[str] = Query(None, description="Search query")
+):
+    """Get all available services with optional filtering"""
+    if search:
+        services = search_services(search)
+    elif type:
+        services = get_services_by_type(type)
+    elif tag:
+        services = get_services_by_tag(tag)
+    else:
+        services = get_enabled_services()
+    
+    return [transform_service_for_api(s) for s in services]
 
-@api_router.get("/services/{service_id}", response_model=Service)
+@api_router.get("/services/types")
+async def get_service_types():
+    """Get all service types with labels"""
+    return SERVICE_TYPE_LABELS
+
+@api_router.get("/services/{service_id}")
 async def get_service(service_id: str):
     """Get service by ID"""
     service = get_service_by_id(service_id)
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
-    return service
+    
+    response = transform_service_for_api(service)
+    
+    # If it's a bundle, include the full details of included services
+    if service.get("includes"):
+        included_services = []
+        for inc_id in service["includes"]:
+            inc_service = get_service_by_id(inc_id)
+            if inc_service:
+                included_services.append(transform_service_for_api(inc_service))
+        response["included_services"] = included_services
+    
+    return response
 
 # File Upload Route
 @api_router.post("/upload")
@@ -431,36 +511,126 @@ async def upload_file(file: UploadFile = File(...)):
         "size": len(content)
     }
 
-# Order Routes
+# Order Routes (Catalog-Driven)
 @api_router.post("/orders/create")
 async def create_order(
     service_id: str = Form(...),
     file_id: str = Form(...),
     file_name: str = Form(...),
     customer_email: str = Form(...),
-    customer_name: str = Form(...)
+    customer_name: str = Form(...),
+    quantity: int = Form(1),
+    extra_fields: Optional[str] = Form(None)  # JSON string for extra fields
 ):
-    """Create a new order"""
+    """Create a new order using the services catalog"""
+    # Look up service in catalog
     service = get_service_by_id(service_id)
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     
+    if not service.get("enabled", True):
+        raise HTTPException(status_code=400, detail="Service is not available")
+    
+    # Parse extra fields if provided
+    parsed_extra_fields = None
+    if extra_fields:
+        try:
+            parsed_extra_fields = json.loads(extra_fields)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid extra_fields JSON")
+    
+    # Validate required extra fields for special service types
+    validation_errors = validate_extra_fields(service, parsed_extra_fields)
+    if validation_errors:
+        raise HTTPException(status_code=400, detail={"errors": validation_errors})
+    
+    # Calculate price based on service type and quantity
+    amount = calculate_order_price(service, quantity)
+    
+    # Create order
     order = Order(
         service_id=service_id,
-        service_name=service.name,
+        service_name=service["name"],
         file_name=file_name,
         customer_email=customer_email,
         customer_name=customer_name,
-        amount=service.price
+        amount=amount
     )
     
-    # Store file_id with order
+    # Build order document
     order_dict = order.model_dump()
     order_dict["file_id"] = file_id
+    order_dict["quantity"] = quantity
+    order_dict["service_type"] = service["type"]
+    order_dict["unit"] = service["unit"]
+    order_dict["base_price_cents"] = service["base_price"]
+    
+    # Store extra fields for grievance/special services
+    if parsed_extra_fields:
+        order_dict["extra_fields"] = parsed_extra_fields
+    
+    # For bundles, store included service IDs
+    if service.get("includes"):
+        order_dict["included_services"] = service["includes"]
     
     await db.orders.insert_one(order_dict)
     
-    return {"order_id": order.order_id, "amount": order.amount, "service_name": service.name}
+    return {
+        "order_id": order.order_id, 
+        "amount": order.amount, 
+        "service_name": service["name"],
+        "service_type": service["type"],
+        "quantity": quantity
+    }
+
+@api_router.post("/orders/create-json")
+async def create_order_json(request: OrderCreateRequest):
+    """Create a new order using JSON body (alternative endpoint)"""
+    service = get_service_by_id(request.service_id)
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    if not service.get("enabled", True):
+        raise HTTPException(status_code=400, detail="Service is not available")
+    
+    # Validate required extra fields
+    validation_errors = validate_extra_fields(service, request.extra_fields)
+    if validation_errors:
+        raise HTTPException(status_code=400, detail={"errors": validation_errors})
+    
+    # Calculate price
+    amount = calculate_order_price(service, request.quantity)
+    
+    order = Order(
+        service_id=request.service_id,
+        service_name=service["name"],
+        file_name=request.file_name,
+        customer_email=request.customer_email,
+        customer_name=request.customer_name,
+        amount=amount
+    )
+    
+    order_dict = order.model_dump()
+    order_dict["file_id"] = request.file_id
+    order_dict["quantity"] = request.quantity
+    order_dict["service_type"] = service["type"]
+    order_dict["unit"] = service["unit"]
+    order_dict["base_price_cents"] = service["base_price"]
+    
+    if request.extra_fields:
+        order_dict["extra_fields"] = request.extra_fields
+    
+    if service.get("includes"):
+        order_dict["included_services"] = service["includes"]
+    
+    await db.orders.insert_one(order_dict)
+    
+    return {
+        "order_id": order.order_id, 
+        "amount": order.amount, 
+        "service_name": service["name"],
+        "service_type": service["type"]
+    }
 
 @api_router.get("/orders/{order_id}")
 async def get_order(order_id: str):
