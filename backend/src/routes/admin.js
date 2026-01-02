@@ -20,12 +20,15 @@ router.post('/login', rateLimiter.auth, async (req, res) => {
     // Find admin user
     let admin = await User.findOne({ email, role: { $in: ['admin', 'support'] } });
 
-    // Create default admin if none exists
-    if (!admin && email === 'admin@filesolved.com' && password === 'Admin123!') {
+    // Create default admin if none exists (uses environment variables)
+    const defaultAdminEmail = process.env.ADMIN_EMAIL || 'admin@filesolved.com';
+    const defaultAdminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
+    
+    if (!admin && email === defaultAdminEmail && password === defaultAdminPassword) {
       const hashedPassword = await bcrypt.hash(password, 10);
       admin = new User({
         userId: uuidv4(),
-        email: 'admin@filesolved.com',
+        email: defaultAdminEmail,
         password: hashedPassword,
         name: 'Admin',
         role: 'admin'
