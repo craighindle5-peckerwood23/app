@@ -176,10 +176,10 @@ const UploadPage = () => {
               {!file ? (
                 <div
                   {...getRootProps()}
-                  className={`upload-zone p-12 text-center cursor-pointer ${isDragActive ? 'upload-zone-active' : ''}`}
+                  className={`upload-zone p-12 text-center cursor-pointer relative z-10 ${isDragActive ? 'upload-zone-active' : ''}`}
                   data-testid="upload-dropzone"
                 >
-                  <input {...getInputProps()} data-testid="file-input" />
+                  <input {...getInputProps()} data-testid="file-input" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
                   <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
                   {isDragActive ? (
                     <p className="text-blue-600 font-medium">Drop the file here...</p>
