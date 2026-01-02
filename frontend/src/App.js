@@ -14,7 +14,7 @@ import ContactPage from "./pages/ContactPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
-const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID || "ARECEuPyGHfh7jklkm8rCChO5Zeevw8bN1Sc4Il3wM9t4KnAcD89Ll504jlf3l7-kmCyrJMkU75Bat8n";
+const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID;
 
 function App() {
   return (
