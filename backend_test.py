@@ -13,7 +13,7 @@ import tempfile
 import os
 
 class FileSolvedAPITester:
-    def __init__(self, base_url="https://autopaper-5.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://filesolved.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
         self.tests_run = 0
