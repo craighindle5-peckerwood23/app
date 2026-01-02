@@ -145,39 +145,39 @@ backend:
 
   - task: "Orders API - POST /api/orders"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/orders.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Order creation implemented but needs testing with file upload"
+        comment: "E2E tested - Creates order with fileId, returns orderId and amount"
 
   - task: "Orders API - GET /api/orders/:id"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/orders.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Implemented, needs testing"
+        comment: "E2E tested - Returns order details with status"
 
   - task: "Upload API - POST /api/upload"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/upload.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "File upload with multer, supports multiple formats"
+        comment: "E2E tested - Returns 201 with fileId, fileName, size, mimeType"
 
   - task: "PayPal API - POST /api/paypal/create-order"
     implemented: true
