@@ -32,6 +32,11 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            {/* New routes for bundles and tools - redirect to services for now */}
+            <Route path="/bundles/:bundleId" element={<ServicesPage />} />
+            <Route path="/tools/:toolId" element={<ServicesPage />} />
+            <Route path="/case-file/new" element={<UploadPage />} />
+            <Route path="/about" element={<FAQPage />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
