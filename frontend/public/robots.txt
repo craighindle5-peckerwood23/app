@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://filesolved.com/sitemap.xml
+
+# Block admin pages
+Disallow: /admin
+Disallow: /admin/*
+
+# Block checkout process pages
+Disallow: /checkout/*
+
+# Block temporary upload files
+Disallow: /uploads/
+
+# Allow search engines to crawl all service pages
+Allow: /services/*
+Allow: /bundles/*
+Allow: /services/category/*
