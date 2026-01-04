@@ -27,8 +27,6 @@ router.get('/', (req, res) => {
       services = searchServices(search);
     } else if (type) {
       services = getServicesByType(type);
-    } else if (tag) {
-      services = getServicesByTag(tag);
     } else {
       services = enabled === 'false' ? servicesCatalog : getEnabledServices();
     }
