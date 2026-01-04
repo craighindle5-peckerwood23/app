@@ -3,12 +3,12 @@ const express = require('express');
 const router = express.Router();
 const {
   servicesCatalog,
-  serviceTypeLabels,
+  serviceTypes,
   getServiceById,
   getServicesByType,
-  getServicesByTag,
   searchServices,
-  getEnabledServices
+  getEnabledServices,
+  getServiceStats
 } = require('../config/servicesCatalog');
 
 // Transform service for API response
