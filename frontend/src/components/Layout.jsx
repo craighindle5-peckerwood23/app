@@ -216,7 +216,7 @@ export const Layout = ({ children, title, description, schema }) => {
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 rounded-lg overflow-hidden">
-                  <img src="/hero-image.png" alt="FileSolved" className="w-full h-full object-cover" />
+                  <img src="/hero-fs-logo.png" alt="FileSolved" className="w-full h-full object-cover" />
                 </div>
                 <span className="font-bold text-xl">FileSolved</span>
               </div>
