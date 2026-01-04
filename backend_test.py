@@ -127,11 +127,11 @@ class FileSolvedAPITester:
             
         try:
             form_data = {
-                'service_id': service_id,
-                'file_id': file_data['fileId'],
-                'file_name': file_data['fileName'],
-                'customer_email': 'test@filesolved.com',
-                'customer_name': 'Test User'
+                'serviceId': service_id,
+                'fileId': file_data['fileId'],
+                'fileName': file_data['fileName'],
+                'customerEmail': 'sarah.tenant@example.com',
+                'customerName': 'Sarah Tenant'
             }
             
             response = self.session.post(f"{self.base_url}/orders", json=form_data, timeout=10)
