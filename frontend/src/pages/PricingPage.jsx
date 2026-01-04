@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import Layout from "../components/Layout";
 import { 
   Check, Zap, Shield, Clock, Infinity, Star, 
-  FileText, Scan, Fax, Brain, Lock, ArrowRight,
+  FileText, ScanLine, PhoneForwarded, Brain, Lock, ArrowRight,
   Loader2
 } from "lucide-react";
 import axios from "axios";
