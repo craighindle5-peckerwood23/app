@@ -83,6 +83,11 @@ router.post('/', optionalAuth, async (req, res) => {
       utmCampaign
     });
 
+    // Send order confirmation email (async, don't wait)
+    sendOrderConfirmation(customerEmail, order.toObject()).catch(err => {
+      console.error('Failed to send order confirmation email:', err);
+    });
+
     res.status(201).json({
       orderId: order.orderId,
       amount: order.amount,
