@@ -88,7 +88,7 @@ export const Layout = ({ children, title, description, schema }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group" data-testid="logo-link">
               <div className="w-10 h-10 rounded-lg overflow-hidden">
-                <img src="/hero-fs-logo.png" alt="FileSolved" className="w-full h-full object-cover" />
+                <img src="/fs-neon-logo.jpg" alt="FileSolved" className="w-full h-full object-cover" />
               </div>
               <span className="font-bold text-xl text-slate-900 tracking-tight">FileSolved</span>
             </Link>
