@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Service for FileSolved - Uses Emergent LLM Key via emergentintegrations
-This script provides a simple HTTP server that the Node.js backend can call
+Run with: python3 ai_service.py
 """
 
 import os
@@ -9,12 +9,8 @@ import sys
 import json
 import asyncio
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import parse_qs
-import threading
 
-# Add backend to path for imports
-sys.path.insert(0, '/app/backend')
-
+# Load environment variables
 from dotenv import load_dotenv
 load_dotenv('/app/backend/.env')
 
@@ -50,46 +46,37 @@ Key tools:
 - PDF Tools: Convert, merge, compress, sign documents
 - Case File Organizer: Build timeline-based case files
 
-Be concise, helpful, and action-oriented. Ask clarifying questions when needed. Keep responses under 200 words unless the user asks for more detail."""
+Be concise, helpful, and action-oriented. Ask clarifying questions when needed. Keep responses under 150 words."""
 
 
-# Store chat sessions
-sessions = {}
+# Store chat instances
+chats = {}
 
 
-def get_or_create_chat(session_id: str) -> LlmChat:
-    """Get existing chat session or create new one"""
-    if session_id not in sessions:
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not api_key:
-            raise ValueError("EMERGENT_LLM_KEY not found in environment")
-        
-        sessions[session_id] = LlmChat(
+async def get_response(session_id: str, message: str) -> str:
+    """Get AI response for a message"""
+    api_key = os.environ.get('EMERGENT_LLM_KEY')
+    if not api_key:
+        raise ValueError("EMERGENT_LLM_KEY not found")
+    
+    # Create new chat instance for each session
+    if session_id not in chats:
+        chats[session_id] = LlmChat(
             api_key=api_key,
             session_id=session_id,
             system_message=SYSTEM_PROMPT
         ).with_model("openai", "gpt-4o")
     
-    return sessions[session_id]
-
-
-async def process_chat(session_id: str, message: str) -> str:
-    """Process a chat message and return the response"""
-    try:
-        chat = get_or_create_chat(session_id)
-        user_message = UserMessage(text=message)
-        response = await chat.send_message(user_message)
-        return response
-    except Exception as e:
-        print(f"Chat error: {e}", file=sys.stderr)
-        raise
+    chat = chats[session_id]
+    user_message = UserMessage(text=message)
+    response = await chat.send_message(user_message)
+    return response
 
 
 class AIHandler(BaseHTTPRequestHandler):
     """HTTP handler for AI requests"""
     
     def do_OPTIONS(self):
-        """Handle CORS preflight"""
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -97,10 +84,8 @@ class AIHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def do_POST(self):
-        """Handle chat request"""
         try:
-            # Read request body
-            content_length = int(self.headers['Content-Length'])
+            content_length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(content_length)
             data = json.loads(body.decode('utf-8'))
             
@@ -108,48 +93,41 @@ class AIHandler(BaseHTTPRequestHandler):
             message = data.get('message', '')
             
             if not message:
-                self.send_error(400, "Message is required")
+                self._send_json(400, {'error': 'Message is required'})
                 return
             
             # Run async function
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                response = loop.run_until_complete(process_chat(session_id, message))
+                response = loop.run_until_complete(get_response(session_id, message))
             finally:
                 loop.close()
             
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            result = {
+            self._send_json(200, {
                 'response': response,
                 'sessionId': session_id
-            }
-            self.wfile.write(json.dumps(result).encode('utf-8'))
+            })
             
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
-            self.send_response(500)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+            self._send_json(500, {'error': str(e)})
+    
+    def _send_json(self, status, data):
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode('utf-8'))
     
     def log_message(self, format, *args):
-        """Suppress default logging"""
-        pass
-
-
-def run_server(port=8002):
-    """Run the AI service server"""
-    server = HTTPServer(('0.0.0.0', port), AIHandler)
-    print(f"AI Service running on port {port}")
-    server.serve_forever()
+        # Log to stderr
+        print(f"AI Service: {format % args}", file=sys.stderr)
 
 
 if __name__ == '__main__':
-    run_server()
+    port = int(os.environ.get('AI_SERVICE_PORT', 8002))
+    server = HTTPServer(('127.0.0.1', port), AIHandler)
+    print(f"AI Service running on port {port}", file=sys.stderr)
+    sys.stderr.flush()
+    server.serve_forever()
