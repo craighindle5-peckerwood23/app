@@ -149,14 +149,14 @@ const HomePage = () => {
     >
       {/* SECTION 1 — HERO WITH IMAGE */}
       <section className="relative overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image - FS Logo */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/hero-image.jpg" 
-            alt="Professional organizing documents" 
+            src="/hero-image.png" 
+            alt="FileSolved" 
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/85 to-slate-900/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
