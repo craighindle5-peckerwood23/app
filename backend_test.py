@@ -405,6 +405,12 @@ class FileSolvedAPITester:
         if admin_login_ok:
             self.test_admin_analytics()
             self.test_admin_orders()
+            self.test_admin_revenue_summary()
+            self.test_admin_users()
+            self.test_admin_errors()
+        
+        # AI functionality tests
+        self.test_ai_chat()
         
         # Print summary
         print("=" * 60)
