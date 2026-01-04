@@ -228,6 +228,132 @@ class FileSolvedAPITester:
             self.log_result("Admin Orders", False, f"Exception: {str(e)}")
             return False
     
+    def test_admin_revenue_summary(self):
+        """Test admin revenue summary endpoint"""
+        if not self.admin_token:
+            self.log_result("Admin Revenue Summary", False, "No admin token available")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/admin/revenue-summary", headers=headers, timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                daily_revenue = data.get('dailyRevenue', [])
+                details += f", Daily revenue entries: {len(daily_revenue)}"
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Admin Revenue Summary", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Admin Revenue Summary", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_admin_users(self):
+        """Test admin users endpoint"""
+        if not self.admin_token:
+            self.log_result("Admin Users", False, "No admin token available")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/admin/users", headers=headers, timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                users = data.get('users', [])
+                details += f", Users count: {len(users)}, Total: {data.get('total', 0)}"
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Admin Users", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Admin Users", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_admin_errors(self):
+        """Test admin errors endpoint"""
+        if not self.admin_token:
+            self.log_result("Admin Errors", False, "No admin token available")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/admin/errors", headers=headers, timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                failed_orders = data.get('failedOrders', [])
+                failed_jobs = data.get('failedJobs', [])
+                details += f", Failed orders: {len(failed_orders)}, Failed jobs: {len(failed_jobs)}"
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Admin Errors", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Admin Errors", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_ai_chat(self):
+        """Test AI chat endpoint with various scenarios"""
+        test_scenarios = [
+            {
+                "message": "My landlord won't fix the heating",
+                "sessionId": "test1",
+                "expected_keywords": ["landlord", "heating", "bundle", "lawyer"]
+            },
+            {
+                "message": "I'm experiencing workplace harassment",
+                "sessionId": "test2", 
+                "expected_keywords": ["workplace", "harassment", "document", "lawyer"]
+            },
+            {
+                "message": "I was harassed by a police officer",
+                "sessionId": "test3",
+                "expected_keywords": ["police", "officer", "misconduct", "lawyer"]
+            }
+        ]
+        
+        all_passed = True
+        for i, scenario in enumerate(test_scenarios):
+            try:
+                response = self.session.post(f"{self.base_url}/ai/chat", json=scenario, timeout=30)
+                success = response.status_code == 200
+                details = f"Status: {response.status_code}"
+                
+                if success:
+                    data = response.json()
+                    ai_response = data.get('response', '')
+                    session_id = data.get('sessionId', '')
+                    
+                    # Check response quality
+                    response_length = len(ai_response)
+                    has_session = bool(session_id)
+                    under_500_words = response_length < 2500  # Rough word count
+                    mentions_lawyer = 'lawyer' in ai_response.lower()
+                    
+                    details += f", Response length: {response_length}, Session: {has_session}, Under 500 words: {under_500_words}, Mentions lawyer: {mentions_lawyer}"
+                    
+                    if not (has_session and under_500_words and mentions_lawyer):
+                        success = False
+                        details += " - Quality checks failed"
+                else:
+                    details += f", Error: {response.text[:100]}"
+                
+                self.log_result(f"AI Chat Scenario {i+1} ({scenario['message'][:30]}...)", success, details)
+                if not success:
+                    all_passed = False
+                    
+            except Exception as e:
+                self.log_result(f"AI Chat Scenario {i+1}", False, f"Exception: {str(e)}")
+                all_passed = False
+        
+        return all_passed
+    
     def test_paypal_endpoints(self, order_id):
         """Test PayPal integration endpoints (creation only, not capture)"""
         if not order_id:
