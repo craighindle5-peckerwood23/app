@@ -134,7 +134,7 @@ class FileSolvedAPITester:
                 'customer_name': 'Test User'
             }
             
-            response = self.session.post(f"{self.base_url}/orders/create", data=form_data, timeout=10)
+            response = self.session.post(f"{self.base_url}/orders", json=form_data, timeout=10)
             success = response.status_code == 200
             details = f"Status: {response.status_code}"
             if success:
