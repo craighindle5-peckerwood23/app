@@ -207,6 +207,65 @@ auditLogSchema.index({ actorId: 1 });
 auditLogSchema.index({ action: 1 });
 auditLogSchema.index({ timestamp: -1 });
 
+// ==================== SUBSCRIPTION MODEL ====================
+const subscriptionSchema = new Schema({
+  subscriptionId: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
+  email: { type: String, required: true },
+  name: String,
+  planId: { type: String, default: 'all_tools_access' },
+  planName: { type: String, default: 'All Tools Access' },
+  priceMonthly: { type: Number, default: 599 }, // in cents
+  currency: { type: String, default: 'USD' },
+  status: { 
+    type: String, 
+    enum: ['active', 'cancelled', 'expired', 'past_due', 'pending'],
+    default: 'pending'
+  },
+  paypalSubscriptionId: String,
+  paypalPlanId: String,
+  // Billing info
+  currentPeriodStart: Date,
+  currentPeriodEnd: Date,
+  nextBillingDate: Date,
+  // Usage tracking
+  toolsUsedThisPeriod: { type: Number, default: 0 },
+  lastToolUsed: Date,
+  // Timestamps
+  startedAt: Date,
+  cancelledAt: Date,
+  cancelReason: String,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+subscriptionSchema.index({ subscriptionId: 1 });
+subscriptionSchema.index({ userId: 1 });
+subscriptionSchema.index({ email: 1 });
+subscriptionSchema.index({ status: 1 });
+subscriptionSchema.index({ paypalSubscriptionId: 1 });
+
+// ==================== SUBSCRIPTION PAYMENT MODEL ====================
+const subscriptionPaymentSchema = new Schema({
+  paymentId: { type: String, required: true, unique: true },
+  subscriptionId: { type: String, required: true },
+  userId: String,
+  amount: { type: Number, required: true },
+  currency: { type: String, default: 'USD' },
+  status: { 
+    type: String, 
+    enum: ['completed', 'pending', 'failed', 'refunded'],
+    default: 'completed'
+  },
+  paypalTransactionId: String,
+  billingPeriodStart: Date,
+  billingPeriodEnd: Date,
+  createdAt: { type: Date, default: Date.now }
+});
+
+subscriptionPaymentSchema.index({ paymentId: 1 });
+subscriptionPaymentSchema.index({ subscriptionId: 1 });
+
 // Export models
 module.exports = {
   User: mongoose.model('User', userSchema),
@@ -217,5 +276,7 @@ module.exports = {
   AISession: mongoose.model('AISession', aiSessionSchema),
   Analytics: mongoose.model('Analytics', analyticsSchema),
   Webhook: mongoose.model('Webhook', webhookSchema),
-  AuditLog: mongoose.model('AuditLog', auditLogSchema)
+  AuditLog: mongoose.model('AuditLog', auditLogSchema),
+  Subscription: mongoose.model('Subscription', subscriptionSchema),
+  SubscriptionPayment: mongoose.model('SubscriptionPayment', subscriptionPaymentSchema)
 };
