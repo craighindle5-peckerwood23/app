@@ -152,7 +152,7 @@ const HomePage = () => {
         {/* Background Image - FS Logo */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/hero-image.png" 
+            src="/hero-fs-logo.png" 
             alt="FileSolved" 
             className="w-full h-full object-cover"
           />
