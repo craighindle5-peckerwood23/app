@@ -147,39 +147,46 @@ const HomePage = () => {
       description="FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use."
       schema={[homeSchema, organizationSchema]}
     >
-      {/* SECTION 1 — HERO */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
+      {/* SECTION 1 — HERO WITH IMAGE */}
+      <section className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/hero-image.jpg" 
+            alt="Professional organizing documents" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/85 to-slate-900/70" />
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
               Turn your proof into power
-              <span className="block text-blue-600">with FileSolved</span>
+              <span className="block text-blue-400">with FileSolved</span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
               FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Link to="/case-file/new" data-testid="hero-start-case">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 w-full sm:w-auto rounded-xl shadow-lg shadow-blue-600/25">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 w-full sm:w-auto rounded-xl shadow-lg shadow-blue-600/30">
                   Start a Case File
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/services" data-testid="hero-browse-tools">
-                <Button variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto rounded-xl border-2">
+                <Button variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto rounded-xl border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50">
                   Browse Tools & Bundles
                 </Button>
               </Link>
             </div>
-            <p className="mt-8 text-sm text-slate-500 flex items-center justify-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
+            <p className="mt-8 text-sm text-slate-400 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
               No legal jargon. No gatekeeping. Just tools that help you stand up for yourself.
             </p>
           </div>
         </div>
-        
-        {/* Decorative gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
 
       {/* SECTION 2 — COMMUNITY EMPOWERMENT */}
