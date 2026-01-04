@@ -1,4 +1,5 @@
-// src/routes/ai.js - AI Integration Routes with GPT-4o via Emergent LLM Key
+// src/routes/ai.js - AI Integration Routes
+// Uses Python AI service for LLM calls via Emergent integrations
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
@@ -6,45 +7,63 @@ const { AISession, File, Analytics } = require('../models');
 const { optionalAuth } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 const fs = require('fs');
-const OpenAI = require('openai').default;
-const { getServiceById, getEnabledServices, searchServices } = require('../config/servicesCatalog');
+const http = require('http');
 
-// Initialize OpenAI client with Emergent LLM Key
-const openai = new OpenAI({
-  apiKey: process.env.EMERGENT_LLM_KEY,
-});
+// AI Service configuration
+const AI_SERVICE_HOST = 'localhost';
+const AI_SERVICE_PORT = 8002;
 
-// System prompt for FileSolved AI Assistant
-const SYSTEM_PROMPT = `You are the FileSolved AI Assistant - a helpful guide for people navigating disputes with landlords, employers, government agencies, and other powerful entities.
-
-FileSolved is a PUBLIC EMPOWERMENT PLATFORM that helps everyday people:
-- Document abuse, negligence, and misconduct
-- Organize evidence into structured case files
-- Generate professional complaints, letters, and reports
-- Convert and process documents (PDF, Word, OCR, etc.)
-
-Your role:
-1. Understand the user's situation (landlord dispute, workplace issue, police misconduct, etc.)
-2. Guide them to the right tools and bundles
-3. Explain how to document evidence effectively
-4. Be empathetic but professional
-5. Never provide legal advice - recommend consulting a lawyer for legal matters
-
-Key bundles we offer:
-- Landlord Protection Bundle: For housing disputes, unsafe conditions, retaliation
-- Officer Misconduct Bundle: For police complaints, civil rights violations
-- ICE & Immigration Bundle: For immigration document preparation
-- Lawyer & Fiduciary Bundle: For disputes with attorneys or trustees
-- HOA & Homeowner Bundle: For HOA disputes, property issues
-- Community Improvement Bundle: For neighborhood concerns, local government
-
-Key tools:
-- Evidence Builder: Organize photos, recordings, documents with timestamps
-- Complaint Generator: Create structured complaints for agencies
-- PDF Tools: Convert, merge, compress, sign documents
-- Case File Organizer: Build timeline-based case files
-
-Be concise, helpful, and action-oriented. Ask clarifying questions when needed.`;
+// Call the Python AI service
+const callAIService = (sessionId, message) => {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({ sessionId, message });
+    
+    const options = {
+      hostname: AI_SERVICE_HOST,
+      port: AI_SERVICE_PORT,
+      path: '/',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      },
+      timeout: 60000 // 60 second timeout
+    };
+    
+    const req = http.request(options, (res) => {
+      let responseData = '';
+      
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          if (res.statusCode === 200) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error || 'AI service error'));
+          }
+        } catch (e) {
+          reject(new Error('Invalid response from AI service'));
+        }
+      });
+    });
+    
+    req.on('error', (e) => {
+      reject(new Error(`AI service unavailable: ${e.message}`));
+    });
+    
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('AI service timeout'));
+    });
+    
+    req.write(data);
+    req.end();
+  });
+};
 
 // Extract text from file (simplified)
 const extractText = async (fileId) => {
@@ -62,60 +81,33 @@ const extractText = async (fileId) => {
 // POST /api/ai/chat - Main chat endpoint for AI Assistant
 router.post('/chat', rateLimiter.ai, optionalAuth, async (req, res) => {
   try {
-    const { message, sessionId, context } = req.body;
+    const { message, sessionId } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Get or create session
-    let session;
     const sid = sessionId || uuidv4();
 
-    if (sessionId) {
-      session = await AISession.findOne({ sessionId });
-    }
+    // Call Python AI service
+    const aiResponse = await callAIService(sid, message);
 
+    // Save to database for persistence
+    let session = await AISession.findOne({ sessionId: sid });
+    
     if (!session) {
       session = new AISession({
         sessionId: sid,
         userId: req.user?.userId,
-        messages: [],
-        context: context || {}
+        messages: []
       });
     }
 
-    // Build messages array for OpenAI
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT }
-    ];
-
-    // Add conversation history (last 10 messages)
-    const historyMessages = session.messages.slice(-10).map(m => ({
-      role: m.role,
-      content: m.content
-    }));
-    messages.push(...historyMessages);
-
-    // Add current user message
-    messages.push({ role: 'user', content: message });
-
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
-      model: process.env.AI_MODEL || 'gpt-4o',
-      messages,
-      max_tokens: 800,
-      temperature: 0.7,
-    });
-
-    const assistantMessage = completion.choices[0].message.content;
-
-    // Save messages to session
+    // Add messages to session
     session.messages.push(
       { role: 'user', content: message, timestamp: new Date() },
-      { role: 'assistant', content: assistantMessage, timestamp: new Date() }
+      { role: 'assistant', content: aiResponse.response, timestamp: new Date() }
     );
-    session.tokensUsed = (session.tokensUsed || 0) + (completion.usage?.total_tokens || 0);
     session.lastActivity = new Date();
     await session.save();
 
@@ -123,113 +115,20 @@ router.post('/chat', rateLimiter.ai, optionalAuth, async (req, res) => {
     await Analytics.create({
       event: 'ai_chat',
       userId: req.user?.userId,
-      details: { sessionId: sid, tokensUsed: completion.usage?.total_tokens }
+      details: { sessionId: sid }
     }).catch(() => {});
 
     res.json({
-      response: assistantMessage,
-      sessionId: sid,
-      tokensUsed: completion.usage?.total_tokens
+      response: aiResponse.response,
+      sessionId: sid
     });
   } catch (error) {
     console.error('AI Chat error:', error);
     
-    // Check for specific error types
-    if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
-      return res.status(429).json({ 
-        error: 'AI service temporarily unavailable. Please try again later.',
-        code: 'QUOTA_EXCEEDED'
-      });
-    }
-    
-    res.status(500).json({ error: 'Failed to process your message. Please try again.' });
-  }
-});
-
-// POST /api/ai/summarize - Summarize document
-router.post('/summarize', rateLimiter.ai, optionalAuth, async (req, res) => {
-  try {
-    const { fileId, maxLength = 500, style = 'paragraph' } = req.body;
-
-    if (!fileId) {
-      return res.status(400).json({ error: 'File ID required' });
-    }
-
-    const text = await extractText(fileId);
-    
-    const completion = await openai.chat.completions.create({
-      model: process.env.AI_MODEL || 'gpt-4o',
-      messages: [
-        { 
-          role: 'system', 
-          content: 'You are a document summarization assistant. Provide clear, concise summaries.' 
-        },
-        { 
-          role: 'user', 
-          content: `Summarize the following document in ${style} format. Maximum length: ${maxLength} words.\n\nDocument:\n${text}` 
-        }
-      ],
-      max_tokens: maxLength,
-      temperature: 0.5,
+    // Return user-friendly error
+    res.status(500).json({ 
+      error: 'I\'m having trouble connecting right now. Please try again in a moment, or browse our tools and bundles directly.' 
     });
-
-    res.json({
-      summary: completion.choices[0].message.content,
-      tokensUsed: completion.usage?.total_tokens,
-      model: process.env.AI_MODEL || 'gpt-4o'
-    });
-  } catch (error) {
-    console.error('Summarize error:', error);
-    res.status(500).json({ error: 'Summarization failed' });
-  }
-});
-
-// POST /api/ai/classify - Classify document type
-router.post('/classify', rateLimiter.ai, optionalAuth, async (req, res) => {
-  try {
-    const { fileId } = req.body;
-
-    if (!fileId) {
-      return res.status(400).json({ error: 'File ID required' });
-    }
-
-    const categories = [
-      'invoice', 'receipt', 'contract', 'legal_document', 'lease',
-      'letter', 'report', 'form', 'certificate', 'resume', 
-      'evidence_photo', 'correspondence', 'complaint', 'other'
-    ];
-
-    const text = await extractText(fileId);
-    
-    const completion = await openai.chat.completions.create({
-      model: process.env.AI_MODEL || 'gpt-4o',
-      messages: [
-        { 
-          role: 'system', 
-          content: 'You are a document classification assistant. Respond only with valid JSON.' 
-        },
-        { 
-          role: 'user', 
-          content: `Classify this document into one of these categories: ${categories.join(', ')}\n\nDocument preview:\n${text.substring(0, 2000)}\n\nRespond with JSON: {"category": "...", "confidence": 0.0-1.0, "reasoning": "..."}` 
-        }
-      ],
-      max_tokens: 150,
-      temperature: 0.3,
-    });
-
-    try {
-      const result = JSON.parse(completion.choices[0].message.content);
-      res.json(result);
-    } catch {
-      res.json({
-        category: 'other',
-        confidence: 0.5,
-        reasoning: completion.choices[0].message.content
-      });
-    }
-  } catch (error) {
-    console.error('Classify error:', error);
-    res.status(500).json({ error: 'Classification failed' });
   }
 });
 
@@ -242,40 +141,37 @@ router.post('/suggest', rateLimiter.ai, optionalAuth, async (req, res) => {
 
     // If user describes a situation, use AI to suggest bundles
     if (situation) {
-      const completion = await openai.chat.completions.create({
-        model: process.env.AI_MODEL || 'gpt-4o',
-        messages: [
-          { 
-            role: 'system', 
-            content: `You help users find the right FileSolved tools. Based on their situation, suggest 2-3 relevant bundles or tools from this list:
-
-Bundles:
-- landlord_protection: Housing disputes, unsafe conditions, eviction threats
-- officer_misconduct: Police complaints, civil rights violations
-- ice_immigration: Immigration documents, FOIA requests
-- lawyer_fiduciary: Attorney/trustee disputes
-- hoa_homeowner: HOA conflicts, property issues
-- community_improvement: Local government, neighborhood issues
-
-Tools:
-- evidence_builder: Organize photos, recordings with timestamps
-- complaint_generator: Create formal complaints
-- pdf_tools: Convert, merge, compress documents
-- case_file_organizer: Build timeline case files
-
-Respond with JSON array: [{"serviceId": "...", "reason": "..."}]` 
-          },
-          { role: 'user', content: situation }
-        ],
-        max_tokens: 200,
-        temperature: 0.5,
-      });
-
       try {
-        const aiSuggestions = JSON.parse(completion.choices[0].message.content);
-        suggestions.push(...aiSuggestions);
-      } catch {
-        // Fallback to general suggestions
+        const prompt = `Based on this situation: "${situation}"
+
+Suggest 2-3 relevant FileSolved bundles or tools. Available options:
+- landlord_protection: Housing disputes, unsafe conditions
+- officer_misconduct: Police complaints, civil rights
+- ice_immigration: Immigration documents
+- lawyer_fiduciary: Attorney/trustee disputes
+- evidence_builder: Organize evidence
+- complaint_generator: Create formal complaints
+
+Reply with ONLY a JSON array like: [{"serviceId": "id", "reason": "one sentence"}]`;
+
+        const aiResponse = await callAIService('suggest-' + Date.now(), prompt);
+        
+        try {
+          // Extract JSON from response
+          const jsonMatch = aiResponse.response.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            const aiSuggestions = JSON.parse(jsonMatch[0]);
+            suggestions.push(...aiSuggestions);
+          }
+        } catch (parseError) {
+          // Fallback suggestions if AI response can't be parsed
+          suggestions.push(
+            { serviceId: 'evidence_builder', reason: 'Start documenting your situation' },
+            { serviceId: 'complaint_generator', reason: 'Create formal complaints' }
+          );
+        }
+      } catch (aiError) {
+        // Fallback if AI service unavailable
         suggestions.push(
           { serviceId: 'evidence_builder', reason: 'Start documenting your situation' },
           { serviceId: 'complaint_generator', reason: 'Create formal complaints' }
@@ -307,46 +203,73 @@ Respond with JSON array: [{"serviceId": "...", "reason": "..."}]`
   }
 });
 
-// POST /api/ai/generate-complaint - Generate a complaint letter
-router.post('/generate-complaint', rateLimiter.ai, optionalAuth, async (req, res) => {
+// POST /api/ai/summarize - Summarize document
+router.post('/summarize', rateLimiter.ai, optionalAuth, async (req, res) => {
   try {
-    const { type, details, recipientInfo } = req.body;
+    const { fileId, maxLength = 500 } = req.body;
 
-    if (!type || !details) {
-      return res.status(400).json({ error: 'Complaint type and details required' });
+    if (!fileId) {
+      return res.status(400).json({ error: 'File ID required' });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: process.env.AI_MODEL || 'gpt-4o',
-      messages: [
-        { 
-          role: 'system', 
-          content: `You help create professional complaint letters. Generate formal, factual complaint letters that:
-- State facts clearly without legal conclusions
-- Include specific dates, times, and incidents
-- Request specific actions/remedies
-- Maintain professional tone
-- Include space for attachments/evidence references
-
-IMPORTANT: Add disclaimer that this is not legal advice and recommend consulting an attorney.` 
-        },
-        { 
-          role: 'user', 
-          content: `Generate a ${type} complaint letter with these details:\n${JSON.stringify(details)}\n\nRecipient: ${JSON.stringify(recipientInfo || {})}` 
-        }
-      ],
-      max_tokens: 1500,
-      temperature: 0.6,
-    });
+    const text = await extractText(fileId);
+    
+    const prompt = `Summarize this document in under ${maxLength} words:\n\n${text}`;
+    const aiResponse = await callAIService('summarize-' + Date.now(), prompt);
 
     res.json({
-      letter: completion.choices[0].message.content,
-      type,
-      tokensUsed: completion.usage?.total_tokens
+      summary: aiResponse.response,
+      model: 'gpt-4o'
     });
   } catch (error) {
-    console.error('Generate complaint error:', error);
-    res.status(500).json({ error: 'Failed to generate complaint' });
+    console.error('Summarize error:', error);
+    res.status(500).json({ error: 'Summarization failed' });
+  }
+});
+
+// POST /api/ai/classify - Classify document type
+router.post('/classify', rateLimiter.ai, optionalAuth, async (req, res) => {
+  try {
+    const { fileId } = req.body;
+
+    if (!fileId) {
+      return res.status(400).json({ error: 'File ID required' });
+    }
+
+    const categories = [
+      'invoice', 'receipt', 'contract', 'legal_document', 'lease',
+      'letter', 'report', 'form', 'certificate', 'resume', 
+      'evidence_photo', 'correspondence', 'complaint', 'other'
+    ];
+
+    const text = await extractText(fileId);
+    
+    const prompt = `Classify this document into one of: ${categories.join(', ')}
+
+Document preview: ${text.substring(0, 2000)}
+
+Respond with JSON only: {"category": "...", "confidence": 0.0-1.0, "reasoning": "..."}`;
+
+    const aiResponse = await callAIService('classify-' + Date.now(), prompt);
+
+    try {
+      const jsonMatch = aiResponse.response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        return res.json(result);
+      }
+    } catch (parseError) {
+      // Fallback
+    }
+
+    res.json({
+      category: 'other',
+      confidence: 0.5,
+      reasoning: 'Unable to classify document'
+    });
+  } catch (error) {
+    console.error('Classify error:', error);
+    res.status(500).json({ error: 'Classification failed' });
   }
 });
 
