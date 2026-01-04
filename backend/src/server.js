@@ -18,6 +18,7 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const aiRoutes = require('./routes/ai');
 const webhookRoutes = require('./routes/webhooks');
+const subscriptionRoutes = require('./routes/subscription');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
