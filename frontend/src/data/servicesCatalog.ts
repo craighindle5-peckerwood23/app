@@ -1,814 +1,820 @@
-// servicesCatalog.ts - FileSolved Complete Services Catalog
+// servicesCatalog.ts - FileSolved Services Catalog (Synced with Backend)
+// This file is synced with /app/backend/src/config/servicesCatalog.js
 
-export type ServiceType = 'conversion' | 'ocr' | 'fax' | 'shredding' | 'bundle' | 'grievance' | 'notary' | 'legal' | 'medical' | 'financial';
+export type ServiceType = 
+  | 'conversion' 
+  | 'pdf_tools' 
+  | 'ocr' 
+  | 'fax' 
+  | 'security' 
+  | 'ai' 
+  | 'image' 
+  | 'utility' 
+  | 'transcription' 
+  | 'legal' 
+  | 'career' 
+  | 'business' 
+  | 'bundle';
 
 export interface FileSolvedService {
   id: string;
   name: string;
-  type: ServiceType;
   description: string;
+  type: ServiceType;
   basePrice: number; // in cents
-  unit: 'per_file' | 'per_page' | 'flat' | 'per_mb';
+  unit: string;
+  maxFileSize: number | null;
+  supportedFormats: string[] | null;
+  outputFormat: string | null;
   enabled: boolean;
-  tags: string[];
-  includes?: string[];
-  requiresExtraFields?: string[];
-  icon?: string;
-  estimatedTime?: string;
-  maxFileSize?: number; // in MB
-  supportedFormats?: string[];
+  popular: boolean;
+  processingTime: string;
 }
 
 export const servicesCatalog: FileSolvedService[] = [
-  // ==================== CONVERSION SERVICES ====================
+  // ===== PDF CONVERSION SERVICES =====
   {
-    id: 'pdf_to_word',
-    name: 'PDF to Word Conversion',
-    type: 'conversion',
-    description: 'Convert PDF documents into editable Word files with formatting preserved.',
+    id: "pdf_to_word",
+    name: "PDF to Word Converter",
+    description: "Convert any PDF into an editable Word document with high-accuracy OCR and formatting preservation.",
+    type: "conversion",
     basePrice: 299,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'word', 'conversion', 'docx'],
-    icon: 'FileText',
-    estimatedTime: '30 seconds',
+    unit: "file",
     maxFileSize: 50,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'word_to_pdf',
-    name: 'Word to PDF Conversion',
-    type: 'conversion',
-    description: 'Convert Word documents to professional PDF format.',
-    basePrice: 199,
-    unit: 'per_file',
+    supportedFormats: [".pdf"],
+    outputFormat: ".docx",
     enabled: true,
-    tags: ['word', 'pdf', 'conversion', 'docx'],
-    icon: 'FileOutput',
-    estimatedTime: '20 seconds',
-    maxFileSize: 50,
-    supportedFormats: ['.doc', '.docx']
+    popular: true,
+    processingTime: "1-3 minutes"
   },
   {
-    id: 'jpg_to_pdf',
-    name: 'Image to PDF Conversion',
-    type: 'conversion',
-    description: 'Convert JPG, PNG, and other images to PDF documents.',
-    basePrice: 149,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['image', 'jpg', 'png', 'pdf', 'conversion'],
-    icon: 'Image',
-    estimatedTime: '15 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-  },
-  {
-    id: 'pdf_to_jpg',
-    name: 'PDF to Image Extraction',
-    type: 'conversion',
-    description: 'Extract pages from PDF files as high-quality images.',
-    basePrice: 199,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'image', 'jpg', 'extraction'],
-    icon: 'Images',
-    estimatedTime: '30 seconds',
-    maxFileSize: 50,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'excel_to_pdf',
-    name: 'Excel to PDF Conversion',
-    type: 'conversion',
-    description: 'Convert Excel spreadsheets to PDF format with formatting intact.',
-    basePrice: 249,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['excel', 'pdf', 'spreadsheet', 'conversion'],
-    icon: 'Table',
-    estimatedTime: '25 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.xls', '.xlsx']
-  },
-  {
-    id: 'pdf_to_excel',
-    name: 'PDF to Excel Conversion',
-    type: 'conversion',
-    description: 'Extract tables from PDF documents into editable Excel files.',
-    basePrice: 399,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'excel', 'table', 'extraction'],
-    icon: 'TableProperties',
-    estimatedTime: '45 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'ppt_to_pdf',
-    name: 'PowerPoint to PDF',
-    type: 'conversion',
-    description: 'Convert PowerPoint presentations to PDF format.',
-    basePrice: 249,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['powerpoint', 'pdf', 'presentation', 'conversion'],
-    icon: 'Presentation',
-    estimatedTime: '30 seconds',
-    maxFileSize: 100,
-    supportedFormats: ['.ppt', '.pptx']
-  },
-  {
-    id: 'pdf_to_ppt',
-    name: 'PDF to PowerPoint',
-    type: 'conversion',
-    description: 'Convert PDF documents to editable PowerPoint slides.',
-    basePrice: 449,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'powerpoint', 'presentation', 'conversion'],
-    icon: 'PresentationChart',
-    estimatedTime: '60 seconds',
-    maxFileSize: 50,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'html_to_pdf',
-    name: 'HTML to PDF Conversion',
-    type: 'conversion',
-    description: 'Convert web pages and HTML files to PDF documents.',
-    basePrice: 199,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['html', 'web', 'pdf', 'conversion'],
-    icon: 'Globe',
-    estimatedTime: '20 seconds',
-    maxFileSize: 10,
-    supportedFormats: ['.html', '.htm']
-  },
-  {
-    id: 'pdf_merge',
-    name: 'PDF Merge',
-    type: 'conversion',
-    description: 'Combine multiple PDF files into a single document.',
-    basePrice: 299,
-    unit: 'flat',
-    enabled: true,
-    tags: ['pdf', 'merge', 'combine'],
-    icon: 'Layers',
-    estimatedTime: '15 seconds',
-    maxFileSize: 100,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'pdf_split',
-    name: 'PDF Split',
-    type: 'conversion',
-    description: 'Split a PDF into multiple separate documents.',
-    basePrice: 249,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'split', 'separate'],
-    icon: 'Scissors',
-    estimatedTime: '20 seconds',
-    maxFileSize: 100,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'pdf_compress',
-    name: 'PDF Compression',
-    type: 'conversion',
-    description: 'Reduce PDF file size while maintaining quality.',
-    basePrice: 149,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'compress', 'reduce', 'optimize'],
-    icon: 'Minimize2',
-    estimatedTime: '30 seconds',
-    maxFileSize: 100,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'pdf_rotate',
-    name: 'PDF Page Rotation',
-    type: 'conversion',
-    description: 'Rotate pages in your PDF documents.',
-    basePrice: 99,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['pdf', 'rotate', 'orientation'],
-    icon: 'RotateCw',
-    estimatedTime: '10 seconds',
-    maxFileSize: 50,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'image_resize',
-    name: 'Image Resize',
-    type: 'conversion',
-    description: 'Resize images to specific dimensions.',
-    basePrice: 99,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['image', 'resize', 'dimensions'],
-    icon: 'Expand',
-    estimatedTime: '10 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-  },
-  {
-    id: 'image_compress',
-    name: 'Image Compression',
-    type: 'conversion',
-    description: 'Compress images to reduce file size.',
-    basePrice: 99,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['image', 'compress', 'optimize'],
-    icon: 'Minimize',
-    estimatedTime: '10 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.webp']
-  },
-
-  // ==================== OCR SERVICES ====================
-  {
-    id: 'ocr_pdf',
-    name: 'OCR for Scanned PDFs',
-    type: 'ocr',
-    description: 'Extract searchable text from scanned PDF documents.',
-    basePrice: 399,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'pdf', 'searchable', 'text'],
-    icon: 'ScanText',
-    estimatedTime: '60 seconds',
-    maxFileSize: 50,
-    supportedFormats: ['.pdf']
-  },
-  {
-    id: 'ocr_image',
-    name: 'OCR for Images',
-    type: 'ocr',
-    description: 'Extract text from images (JPG, PNG, etc.).',
+    id: "pdf_to_excel",
+    name: "PDF to Excel Converter",
+    description: "Extract tables and data from PDFs into clean, structured Excel spreadsheets instantly.",
+    type: "conversion",
     basePrice: 349,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'image', 'text', 'extraction'],
-    icon: 'ScanLine',
-    estimatedTime: '45 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
-  },
-  {
-    id: 'ocr_handwriting',
-    name: 'Handwriting Recognition',
-    type: 'ocr',
-    description: 'Convert handwritten documents to digital text.',
-    basePrice: 599,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'handwriting', 'manuscript'],
-    icon: 'PenTool',
-    estimatedTime: '90 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.pdf']
-  },
-  {
-    id: 'ocr_receipt',
-    name: 'Receipt OCR',
-    type: 'ocr',
-    description: 'Extract itemized data from receipts.',
-    basePrice: 249,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'receipt', 'expense'],
-    icon: 'Receipt',
-    estimatedTime: '30 seconds',
-    maxFileSize: 10,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.pdf']
-  },
-  {
-    id: 'ocr_invoice',
-    name: 'Invoice Data Extraction',
-    type: 'ocr',
-    description: 'Extract structured data from invoices.',
-    basePrice: 399,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'invoice', 'billing', 'extraction'],
-    icon: 'FileSpreadsheet',
-    estimatedTime: '45 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.pdf', '.jpg', '.png']
-  },
-  {
-    id: 'ocr_business_card',
-    name: 'Business Card Scanner',
-    type: 'ocr',
-    description: 'Extract contact information from business cards.',
-    basePrice: 149,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['ocr', 'business card', 'contact'],
-    icon: 'Contact',
-    estimatedTime: '15 seconds',
-    maxFileSize: 5,
-    supportedFormats: ['.jpg', '.jpeg', '.png']
-  },
-  {
-    id: 'document_scan_cleanup',
-    name: 'Document Scan Cleanup',
-    type: 'ocr',
-    description: 'Clean, straighten, and enhance scanned documents.',
-    basePrice: 249,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['scan', 'cleanup', 'enhance', 'straighten'],
-    icon: 'Scan',
-    estimatedTime: '30 seconds',
-    maxFileSize: 25,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.pdf']
-  },
-
-  // ==================== FAX SERVICES ====================
-  {
-    id: 'fax_domestic',
-    name: 'Domestic Fax',
-    type: 'fax',
-    description: 'Send documents via fax within the United States.',
-    basePrice: 499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['fax', 'domestic', 'us'],
-    icon: 'Printer',
-    estimatedTime: '2 minutes',
-    maxFileSize: 25,
-    supportedFormats: ['.pdf'],
-    requiresExtraFields: ['fax_number']
-  },
-  {
-    id: 'fax_international',
-    name: 'International Fax',
-    type: 'fax',
-    description: 'Send documents via fax internationally.',
-    basePrice: 999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['fax', 'international', 'global'],
-    icon: 'Globe2',
-    estimatedTime: '3 minutes',
-    maxFileSize: 25,
-    supportedFormats: ['.pdf'],
-    requiresExtraFields: ['fax_number', 'country_code']
-  },
-  {
-    id: 'fax_hipaa',
-    name: 'HIPAA-Compliant Fax',
-    type: 'fax',
-    description: 'Secure fax transmission for healthcare documents.',
-    basePrice: 799,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['fax', 'hipaa', 'healthcare', 'secure'],
-    icon: 'ShieldCheck',
-    estimatedTime: '2 minutes',
-    maxFileSize: 25,
-    supportedFormats: ['.pdf'],
-    requiresExtraFields: ['fax_number', 'recipient_name']
-  },
-  {
-    id: 'fax_legal',
-    name: 'Legal Document Fax',
-    type: 'fax',
-    description: 'Priority fax service for legal documents with confirmation.',
-    basePrice: 699,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['fax', 'legal', 'court', 'priority'],
-    icon: 'Scale',
-    estimatedTime: '2 minutes',
+    unit: "file",
     maxFileSize: 50,
-    supportedFormats: ['.pdf'],
-    requiresExtraFields: ['fax_number', 'case_number']
+    supportedFormats: [".pdf"],
+    outputFormat: ".xlsx",
+    enabled: true,
+    popular: true,
+    processingTime: "1-3 minutes"
   },
-
-  // ==================== SHREDDING SERVICES ====================
   {
-    id: 'secure_shred_basic',
-    name: 'Secure Document Shredding',
-    type: 'shredding',
-    description: 'Permanently delete documents with destruction certificate.',
+    id: "pdf_to_powerpoint",
+    name: "PDF to PowerPoint Converter",
+    description: "Transform PDFs into fully editable PowerPoint slides with layout retention.",
+    type: "conversion",
+    basePrice: 349,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pptx",
+    enabled: true,
+    popular: false,
+    processingTime: "2-4 minutes"
+  },
+  {
+    id: "pdf_to_text",
+    name: "PDF to Text Converter",
+    description: "Pull clean, selectable text from any PDF using advanced OCR.",
+    type: "conversion",
     basePrice: 199,
-    unit: 'per_file',
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".txt",
     enabled: true,
-    tags: ['shred', 'delete', 'secure', 'certificate'],
-    icon: 'Trash2',
-    estimatedTime: '10 seconds',
-    maxFileSize: 100
+    popular: false,
+    processingTime: "1-2 minutes"
   },
   {
-    id: 'secure_shred_gdpr',
-    name: 'GDPR-Compliant Deletion',
-    type: 'shredding',
-    description: 'Secure deletion meeting GDPR requirements with audit trail.',
-    basePrice: 399,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['shred', 'gdpr', 'compliance', 'audit'],
-    icon: 'ShieldAlert',
-    estimatedTime: '15 seconds',
-    maxFileSize: 100
-  },
-  {
-    id: 'secure_shred_hipaa',
-    name: 'HIPAA-Compliant Deletion',
-    type: 'shredding',
-    description: 'Healthcare document destruction with compliance certificate.',
-    basePrice: 499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['shred', 'hipaa', 'healthcare', 'compliance'],
-    icon: 'HeartPulse',
-    estimatedTime: '15 seconds',
-    maxFileSize: 100
-  },
-
-  // ==================== BUNDLE SERVICES ====================
-  {
-    id: 'emergency_bundle_basic',
-    name: 'Emergency Bundle – Basic',
-    type: 'bundle',
-    description: 'Fast-track processing: OCR + Conversion with priority queue.',
-    basePrice: 1499,
-    unit: 'flat',
-    enabled: true,
-    tags: ['bundle', 'emergency', 'priority', 'fast'],
-    icon: 'Zap',
-    includes: ['pdf_to_word', 'ocr_pdf'],
-    estimatedTime: '2 minutes'
-  },
-  {
-    id: 'emergency_bundle_pro',
-    name: 'Emergency Bundle – Pro',
-    type: 'bundle',
-    description: 'Complete document processing with OCR, conversion, and cleanup.',
-    basePrice: 2999,
-    unit: 'flat',
-    enabled: true,
-    tags: ['bundle', 'emergency', 'premium', 'complete'],
-    icon: 'Rocket',
-    includes: ['pdf_to_word', 'word_to_pdf', 'ocr_pdf', 'document_scan_cleanup'],
-    estimatedTime: '3 minutes'
-  },
-  {
-    id: 'legal_bundle',
-    name: 'Legal Document Bundle',
-    type: 'bundle',
-    description: 'Complete legal document preparation: OCR, conversion, secure storage.',
-    basePrice: 3999,
-    unit: 'flat',
-    enabled: true,
-    tags: ['bundle', 'legal', 'court', 'complete'],
-    icon: 'Gavel',
-    includes: ['ocr_pdf', 'pdf_to_word', 'pdf_merge', 'fax_legal'],
-    estimatedTime: '5 minutes'
-  },
-  {
-    id: 'medical_bundle',
-    name: 'Medical Records Bundle',
-    type: 'bundle',
-    description: 'HIPAA-compliant processing for medical documents.',
-    basePrice: 4499,
-    unit: 'flat',
-    enabled: true,
-    tags: ['bundle', 'medical', 'hipaa', 'healthcare'],
-    icon: 'Stethoscope',
-    includes: ['ocr_pdf', 'pdf_to_word', 'fax_hipaa', 'secure_shred_hipaa'],
-    estimatedTime: '5 minutes'
-  },
-  {
-    id: 'business_bundle',
-    name: 'Business Document Bundle',
-    type: 'bundle',
-    description: 'Complete business document processing package.',
-    basePrice: 2499,
-    unit: 'flat',
-    enabled: true,
-    tags: ['bundle', 'business', 'corporate'],
-    icon: 'Briefcase',
-    includes: ['pdf_to_word', 'word_to_pdf', 'excel_to_pdf', 'pdf_merge'],
-    estimatedTime: '3 minutes'
-  },
-
-  // ==================== GRIEVANCE & LEGAL SERVICES ====================
-  {
-    id: 'grievance_report',
-    name: 'Grievance Report Package',
-    type: 'grievance',
-    description: 'Structured grievance report preparation and document packaging.',
-    basePrice: 1999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['legal', 'grievance', 'report', 'complaint'],
-    icon: 'FileWarning',
-    estimatedTime: '10 minutes',
-    requiresExtraFields: ['incident_date', 'authority_to_submit', 'summary']
-  },
-  {
-    id: 'grievance_union',
-    name: 'Union Grievance Filing',
-    type: 'grievance',
-    description: 'Prepare and format union grievance documents.',
-    basePrice: 2499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['legal', 'grievance', 'union', 'labor'],
-    icon: 'Users',
-    estimatedTime: '15 minutes',
-    requiresExtraFields: ['union_local', 'incident_date', 'contract_article', 'summary']
-  },
-  {
-    id: 'eeoc_complaint',
-    name: 'EEOC Complaint Prep',
-    type: 'grievance',
-    description: 'Prepare documents for EEOC discrimination complaints.',
-    basePrice: 2999,
-    unit: 'flat',
-    enabled: true,
-    tags: ['legal', 'eeoc', 'discrimination', 'complaint'],
-    icon: 'Scale',
-    estimatedTime: '20 minutes',
-    requiresExtraFields: ['incident_date', 'discrimination_type', 'employer_name', 'summary']
-  },
-  {
-    id: 'foia_request',
-    name: 'FOIA Request Prep',
-    type: 'legal',
-    description: 'Prepare Freedom of Information Act request documents.',
-    basePrice: 1499,
-    unit: 'flat',
-    enabled: true,
-    tags: ['legal', 'foia', 'government', 'request'],
-    icon: 'FileSearch',
-    estimatedTime: '10 minutes',
-    requiresExtraFields: ['agency_name', 'records_description']
-  },
-
-  // ==================== NOTARY SERVICES ====================
-  {
-    id: 'notary_acknowledgment',
-    name: 'Notary Acknowledgment',
-    type: 'notary',
-    description: 'Remote online notarization for acknowledgments.',
-    basePrice: 2499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['notary', 'acknowledgment', 'remote', 'ron'],
-    icon: 'Stamp',
-    estimatedTime: '15 minutes',
-    requiresExtraFields: ['signer_name', 'document_type']
-  },
-  {
-    id: 'notary_affidavit',
-    name: 'Notarized Affidavit',
-    type: 'notary',
-    description: 'Remote notarization for sworn affidavits.',
-    basePrice: 2999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['notary', 'affidavit', 'sworn', 'legal'],
-    icon: 'FileCheck',
-    estimatedTime: '20 minutes',
-    requiresExtraFields: ['affiant_name', 'subject_matter']
-  },
-  {
-    id: 'notary_apostille_prep',
-    name: 'Apostille Preparation',
-    type: 'notary',
-    description: 'Prepare documents for apostille certification.',
-    basePrice: 1999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['notary', 'apostille', 'international', 'certification'],
-    icon: 'Globe',
-    estimatedTime: '10 minutes',
-    requiresExtraFields: ['destination_country', 'document_type']
-  },
-
-  // ==================== MEDICAL DOCUMENT SERVICES ====================
-  {
-    id: 'medical_records_request',
-    name: 'Medical Records Request',
-    type: 'medical',
-    description: 'Prepare HIPAA-compliant medical records request forms.',
-    basePrice: 999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['medical', 'hipaa', 'records', 'request'],
-    icon: 'ClipboardList',
-    estimatedTime: '10 minutes',
-    requiresExtraFields: ['patient_name', 'provider_name', 'date_range']
-  },
-  {
-    id: 'medical_authorization',
-    name: 'Medical Authorization Form',
-    type: 'medical',
-    description: 'Generate HIPAA authorization forms for records release.',
-    basePrice: 799,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['medical', 'hipaa', 'authorization', 'release'],
-    icon: 'FileKey',
-    estimatedTime: '5 minutes',
-    requiresExtraFields: ['patient_name', 'recipient_name']
-  },
-  {
-    id: 'medical_billing_review',
-    name: 'Medical Bill Review',
-    type: 'medical',
-    description: 'OCR and organize medical billing statements.',
-    basePrice: 599,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['medical', 'billing', 'insurance', 'review'],
-    icon: 'DollarSign',
-    estimatedTime: '5 minutes'
-  },
-
-  // ==================== FINANCIAL DOCUMENT SERVICES ====================
-  {
-    id: 'tax_document_prep',
-    name: 'Tax Document Organization',
-    type: 'financial',
-    description: 'Organize and prepare tax documents for filing.',
-    basePrice: 1499,
-    unit: 'flat',
-    enabled: true,
-    tags: ['financial', 'tax', 'irs', 'preparation'],
-    icon: 'Calculator',
-    estimatedTime: '15 minutes'
-  },
-  {
-    id: 'bank_statement_ocr',
-    name: 'Bank Statement OCR',
-    type: 'financial',
-    description: 'Extract transaction data from bank statements.',
-    basePrice: 499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['financial', 'bank', 'statement', 'extraction'],
-    icon: 'Building',
-    estimatedTime: '30 seconds'
-  },
-  {
-    id: 'loan_document_prep',
-    name: 'Loan Application Prep',
-    type: 'financial',
-    description: 'Organize documents for loan applications.',
-    basePrice: 1999,
-    unit: 'flat',
-    enabled: true,
-    tags: ['financial', 'loan', 'mortgage', 'application'],
-    icon: 'Home',
-    estimatedTime: '20 minutes'
-  },
-  {
-    id: 'contract_review_prep',
-    name: 'Contract Review Prep',
-    type: 'legal',
-    description: 'Prepare contracts for legal review with OCR and formatting.',
-    basePrice: 1299,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['legal', 'contract', 'review', 'preparation'],
-    icon: 'FileSignature',
-    estimatedTime: '10 minutes'
-  },
-
-  // ==================== SPECIALTY SERVICES ====================
-  {
-    id: 'redaction_basic',
-    name: 'Document Redaction',
-    type: 'legal',
-    description: 'Redact sensitive information from documents.',
-    basePrice: 599,
-    unit: 'per_page',
-    enabled: true,
-    tags: ['redaction', 'privacy', 'sensitive', 'legal'],
-    icon: 'EyeOff',
-    estimatedTime: '1 minute per page'
-  },
-  {
-    id: 'redaction_ai',
-    name: 'AI-Powered Redaction',
-    type: 'legal',
-    description: 'Automatic detection and redaction of PII and sensitive data.',
-    basePrice: 999,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['redaction', 'ai', 'pii', 'automatic'],
-    icon: 'BrainCircuit',
-    estimatedTime: '2 minutes'
-  },
-  {
-    id: 'translation_prep',
-    name: 'Translation Prep',
-    type: 'conversion',
-    description: 'Prepare documents for professional translation.',
-    basePrice: 399,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['translation', 'language', 'preparation'],
-    icon: 'Languages',
-    estimatedTime: '5 minutes'
-  },
-  {
-    id: 'bates_numbering',
-    name: 'Bates Numbering',
-    type: 'legal',
-    description: 'Apply Bates numbering to legal documents.',
-    basePrice: 499,
-    unit: 'per_file',
-    enabled: true,
-    tags: ['legal', 'bates', 'numbering', 'discovery'],
-    icon: 'Hash',
-    estimatedTime: '30 seconds'
-  },
-  {
-    id: 'watermark_add',
-    name: 'Add Watermark',
-    type: 'conversion',
-    description: 'Add text or image watermarks to documents.',
+    id: "word_to_pdf",
+    name: "Word to PDF Converter",
+    description: "Convert Word documents into secure, shareable PDFs with perfect formatting.",
+    type: "conversion",
     basePrice: 199,
-    unit: 'per_file',
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".doc", ".docx"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['watermark', 'branding', 'security'],
-    icon: 'Droplet',
-    estimatedTime: '20 seconds'
+    popular: true,
+    processingTime: "1-2 minutes"
   },
   {
-    id: 'watermark_remove',
-    name: 'Remove Watermark',
-    type: 'conversion',
-    description: 'Remove watermarks from documents.',
-    basePrice: 499,
-    unit: 'per_file',
+    id: "excel_to_pdf",
+    name: "Excel to PDF Converter",
+    description: "Export spreadsheets into polished, print-ready PDF files.",
+    type: "conversion",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".xls", ".xlsx"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['watermark', 'remove', 'clean'],
-    icon: 'Eraser',
-    estimatedTime: '45 seconds'
+    popular: false,
+    processingTime: "1-2 minutes"
   },
   {
-    id: 'digital_signature',
-    name: 'Digital Signature Prep',
-    type: 'legal',
-    description: 'Prepare documents for digital signature.',
+    id: "powerpoint_to_pdf",
+    name: "PowerPoint to PDF Converter",
+    description: "Turn presentations into high-quality PDFs for easy sharing.",
+    type: "conversion",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: [".ppt", ".pptx"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1-3 minutes"
+  },
+  {
+    id: "image_to_pdf",
+    name: "Image to PDF Converter",
+    description: "Combine images into a single, clean PDF with auto-alignment.",
+    type: "conversion",
+    basePrice: 199,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "1-2 minutes"
+  },
+
+  // ===== PDF TOOLS =====
+  {
+    id: "pdf_merger",
+    name: "PDF Merger",
+    description: "Merge multiple PDFs into one organized document.",
+    type: "pdf_tools",
     basePrice: 299,
-    unit: 'per_file',
+    unit: "batch",
+    maxFileSize: 100,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['signature', 'digital', 'esign'],
-    icon: 'PenLine',
-    estimatedTime: '15 seconds'
+    popular: true,
+    processingTime: "1-3 minutes"
   },
   {
-    id: 'form_fillable',
-    name: 'Create Fillable PDF',
-    type: 'conversion',
-    description: 'Convert static PDFs to fillable forms.',
-    basePrice: 799,
-    unit: 'per_file',
+    id: "pdf_splitter",
+    name: "PDF Splitter",
+    description: "Split large PDFs into smaller, more manageable files.",
+    type: "pdf_tools",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['form', 'fillable', 'interactive', 'pdf'],
-    icon: 'FormInput',
-    estimatedTime: '5 minutes'
+    popular: true,
+    processingTime: "1-2 minutes"
   },
   {
-    id: 'pdf_password_protect',
-    name: 'PDF Password Protection',
-    type: 'conversion',
-    description: 'Add password protection to PDF documents.',
+    id: "pdf_compressor",
+    name: "PDF Compressor",
+    description: "Reduce PDF file size while maintaining clarity.",
+    type: "pdf_tools",
     basePrice: 199,
-    unit: 'per_file',
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['security', 'password', 'encrypt', 'pdf'],
-    icon: 'Lock',
-    estimatedTime: '15 seconds'
+    popular: true,
+    processingTime: "1-2 minutes"
   },
   {
-    id: 'pdf_password_remove',
-    name: 'PDF Password Removal',
-    type: 'conversion',
-    description: 'Remove password from PDFs (requires current password).',
+    id: "pdf_password_protection",
+    name: "PDF Password Protection",
+    description: "Add encryption and password security to sensitive PDFs.",
+    type: "pdf_tools",
     basePrice: 299,
-    unit: 'per_file',
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
     enabled: true,
-    tags: ['security', 'password', 'unlock', 'pdf'],
-    icon: 'Unlock',
-    estimatedTime: '15 seconds'
+    popular: false,
+    processingTime: "1 minute"
+  },
+  {
+    id: "pdf_unlocker",
+    name: "PDF Unlocker",
+    description: "Remove passwords from PDFs you own or have permission to modify.",
+    type: "pdf_tools",
+    basePrice: 349,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1 minute"
+  },
+  {
+    id: "pdf_page_reorder",
+    name: "PDF Page Reorder",
+    description: "Rearrange, rotate, or delete PDF pages with precision.",
+    type: "pdf_tools",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "pdf_page_extractor",
+    name: "PDF Page Extractor",
+    description: "Extract specific pages from a PDF into a new file.",
+    type: "pdf_tools",
+    basePrice: 199,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1 minute"
+  },
+  {
+    id: "pdf_watermark",
+    name: "PDF Watermark Tool",
+    description: "Add text or image watermarks to PDFs for branding or security.",
+    type: "pdf_tools",
+    basePrice: 299,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "pdf_esign",
+    name: "PDF eSign Tool",
+    description: "Sign PDFs digitally with legally compliant signatures.",
+    type: "pdf_tools",
+    basePrice: 399,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "1 minute"
+  },
+  {
+    id: "pdf_form_filler",
+    name: "PDF Form Filler",
+    description: "Fill out interactive PDF forms online with ease.",
+    type: "pdf_tools",
+    basePrice: 299,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "pdf_redaction",
+    name: "PDF Redaction Tool",
+    description: "Permanently remove sensitive text or data from PDFs.",
+    type: "pdf_tools",
+    basePrice: 399,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "2-3 minutes"
+  },
+
+  // ===== OCR SERVICES =====
+  {
+    id: "pdf_ocr",
+    name: "PDF OCR Tool",
+    description: "Convert scanned PDFs into searchable, editable text.",
+    type: "ocr",
+    basePrice: 349,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "2-5 minutes"
+  },
+  {
+    id: "document_scanner",
+    name: "Document Scanner",
+    description: "Scan documents using your device camera with auto-crop and cleanup.",
+    type: "ocr",
+    basePrice: 199,
+    unit: "scan",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "1 minute"
+  },
+  {
+    id: "bulk_document_scanner",
+    name: "Bulk Document Scanner",
+    description: "Scan and process large batches of documents at once.",
+    type: "ocr",
+    basePrice: 999,
+    unit: "batch",
+    maxFileSize: 100,
+    supportedFormats: [".jpg", ".jpeg", ".png", ".pdf"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "5-10 minutes"
+  },
+  {
+    id: "image_ocr",
+    name: "Image OCR",
+    description: "Extract text from images using advanced optical character recognition.",
+    type: "ocr",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff"],
+    outputFormat: ".txt",
+    enabled: true,
+    popular: true,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "handwriting_ocr",
+    name: "Handwriting OCR",
+    description: "Convert handwritten notes into digital, editable text.",
+    type: "ocr",
+    basePrice: 449,
+    unit: "file",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png", ".pdf"],
+    outputFormat: ".txt",
+    enabled: true,
+    popular: false,
+    processingTime: "2-4 minutes"
+  },
+
+  // ===== FAX SERVICES =====
+  {
+    id: "fax_sending",
+    name: "Fax Sending Tool",
+    description: "Send secure, encrypted faxes directly from your browser.",
+    type: "fax",
+    basePrice: 299,
+    unit: "page",
+    maxFileSize: 25,
+    supportedFormats: [".pdf", ".doc", ".docx", ".jpg", ".png"],
+    outputFormat: "fax",
+    enabled: true,
+    popular: true,
+    processingTime: "2-5 minutes"
+  },
+  {
+    id: "fax_receiving",
+    name: "Fax Receiving Tool",
+    description: "Receive faxes online with instant notifications.",
+    type: "fax",
+    basePrice: 499,
+    unit: "month",
+    maxFileSize: 50,
+    supportedFormats: ["fax"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "Instant"
+  },
+  {
+    id: "fax_to_email",
+    name: "Fax to Email",
+    description: "Automatically forward incoming faxes to your email inbox.",
+    type: "fax",
+    basePrice: 599,
+    unit: "month",
+    maxFileSize: 50,
+    supportedFormats: ["fax"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "Instant"
+  },
+
+  // ===== SECURITY & SHREDDING =====
+  {
+    id: "secure_shredding",
+    name: "Secure Document Shredding",
+    description: "Permanently destroy digital files with military-grade wiping.",
+    type: "security",
+    basePrice: 199,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: ["*"],
+    outputFormat: null,
+    enabled: true,
+    popular: false,
+    processingTime: "1 minute"
+  },
+  {
+    id: "bulk_shredding",
+    name: "Bulk File Shredding",
+    description: "Securely delete large batches of files in one action.",
+    type: "security",
+    basePrice: 499,
+    unit: "batch",
+    maxFileSize: 500,
+    supportedFormats: ["*"],
+    outputFormat: null,
+    enabled: true,
+    popular: false,
+    processingTime: "2-5 minutes"
+  },
+
+  // ===== AI DOCUMENT SERVICES =====
+  {
+    id: "document_translation",
+    name: "Document Translation",
+    description: "Translate documents into 100+ languages with formatting retention.",
+    type: "ai",
+    basePrice: 499,
+    unit: "page",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx", ".txt"],
+    outputFormat: "same",
+    enabled: true,
+    popular: true,
+    processingTime: "2-5 minutes"
+  },
+  {
+    id: "document_summarizer",
+    name: "Document Summarizer",
+    description: "Generate concise summaries of long documents using AI.",
+    type: "ai",
+    basePrice: 349,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx", ".txt"],
+    outputFormat: ".txt",
+    enabled: true,
+    popular: true,
+    processingTime: "1-3 minutes"
+  },
+  {
+    id: "document_classifier",
+    name: "Document Classifier",
+    description: "Automatically categorize documents into predefined types.",
+    type: "ai",
+    basePrice: 299,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx", ".txt", ".jpg", ".png"],
+    outputFormat: "json",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "document_tagging",
+    name: "Document Tagging",
+    description: "Add smart metadata tags to documents for easy organization.",
+    type: "ai",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx", ".txt"],
+    outputFormat: "json",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "document_comparison",
+    name: "Document Comparison Tool",
+    description: "Compare two documents and highlight differences.",
+    type: "ai",
+    basePrice: 399,
+    unit: "comparison",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx", ".txt"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "2-4 minutes"
+  },
+
+  // ===== IMAGE TOOLS =====
+  {
+    id: "image_enhancer",
+    name: "Image Enhancer",
+    description: "Improve clarity, brightness, and readability of scanned images.",
+    type: "image",
+    basePrice: 199,
+    unit: "file",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png", ".bmp", ".tiff"],
+    outputFormat: "same",
+    enabled: true,
+    popular: true,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "image_background_remover",
+    name: "Image Background Remover",
+    description: "Remove backgrounds from images automatically.",
+    type: "image",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png"],
+    outputFormat: ".png",
+    enabled: true,
+    popular: true,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "image_upscaler",
+    name: "Image Upscaler",
+    description: "Increase image resolution using AI super-resolution.",
+    type: "image",
+    basePrice: 349,
+    unit: "file",
+    maxFileSize: 25,
+    supportedFormats: [".jpg", ".jpeg", ".png"],
+    outputFormat: "same",
+    enabled: true,
+    popular: false,
+    processingTime: "2-4 minutes"
+  },
+
+  // ===== FILE UTILITIES =====
+  {
+    id: "file_converter",
+    name: "File Converter (Universal)",
+    description: "Convert between dozens of file formats instantly.",
+    type: "utility",
+    basePrice: 249,
+    unit: "file",
+    maxFileSize: 100,
+    supportedFormats: ["*"],
+    outputFormat: "variable",
+    enabled: true,
+    popular: true,
+    processingTime: "1-3 minutes"
+  },
+  {
+    id: "zip_extractor",
+    name: "ZIP Extractor",
+    description: "Extract ZIP, RAR, and 7z archives online.",
+    type: "utility",
+    basePrice: 149,
+    unit: "file",
+    maxFileSize: 200,
+    supportedFormats: [".zip", ".rar", ".7z"],
+    outputFormat: "folder",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "zip_creator",
+    name: "ZIP Creator",
+    description: "Compress files into ZIP archives for easy sharing.",
+    type: "utility",
+    basePrice: 149,
+    unit: "batch",
+    maxFileSize: 200,
+    supportedFormats: ["*"],
+    outputFormat: ".zip",
+    enabled: true,
+    popular: false,
+    processingTime: "1-2 minutes"
+  },
+
+  // ===== AUDIO & VIDEO =====
+  {
+    id: "audio_transcription",
+    name: "Audio to Text Transcription",
+    description: "Convert audio recordings into accurate text transcripts.",
+    type: "transcription",
+    basePrice: 499,
+    unit: "minute",
+    maxFileSize: 500,
+    supportedFormats: [".mp3", ".wav", ".m4a", ".ogg", ".flac"],
+    outputFormat: ".txt",
+    enabled: true,
+    popular: true,
+    processingTime: "5-15 minutes"
+  },
+  {
+    id: "video_transcription",
+    name: "Video to Text Transcription",
+    description: "Extract spoken content from videos into text.",
+    type: "transcription",
+    basePrice: 599,
+    unit: "minute",
+    maxFileSize: 1000,
+    supportedFormats: [".mp4", ".mov", ".avi", ".mkv", ".webm"],
+    outputFormat: ".txt",
+    enabled: true,
+    popular: false,
+    processingTime: "10-30 minutes"
+  },
+  {
+    id: "voice_recorder",
+    name: "Voice Recorder",
+    description: "Record audio directly in your browser and save it securely.",
+    type: "transcription",
+    basePrice: 99,
+    unit: "recording",
+    maxFileSize: 100,
+    supportedFormats: ["audio"],
+    outputFormat: ".mp3",
+    enabled: true,
+    popular: false,
+    processingTime: "Instant"
+  },
+
+  // ===== LEGAL & BUSINESS DOCUMENTS =====
+  {
+    id: "notarization_prep",
+    name: "Notarization Prep Tool",
+    description: "Prepare documents for online notarization with guided steps.",
+    type: "legal",
+    basePrice: 599,
+    unit: "document",
+    maxFileSize: 50,
+    supportedFormats: [".pdf", ".doc", ".docx"],
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "5-10 minutes"
+  },
+  {
+    id: "legal_form_generator",
+    name: "Legal Form Generator",
+    description: "Generate common legal forms with AI assistance.",
+    type: "legal",
+    basePrice: 799,
+    unit: "form",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "2-5 minutes"
+  },
+  {
+    id: "grievance_letter_generator",
+    name: "Grievance Letter Generator",
+    description: "Create structured, professional grievance letters automatically.",
+    type: "legal",
+    basePrice: 499,
+    unit: "letter",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "2-3 minutes"
+  },
+  {
+    id: "emergency_document_bundle",
+    name: "Emergency Document Bundle",
+    description: "Generate a complete emergency-ready document pack (ID, medical, legal).",
+    type: "bundle",
+    basePrice: 1999,
+    unit: "bundle",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "10-15 minutes"
+  },
+
+  // ===== CAREER DOCUMENTS =====
+  {
+    id: "resume_builder",
+    name: "Resume Builder",
+    description: "Create polished, ATS-optimized resumes with AI.",
+    type: "career",
+    basePrice: 699,
+    unit: "resume",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "5-10 minutes"
+  },
+  {
+    id: "cover_letter_generator",
+    name: "Cover Letter Generator",
+    description: "Produce tailored cover letters for any job application.",
+    type: "career",
+    basePrice: 399,
+    unit: "letter",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "2-5 minutes"
+  },
+
+  // ===== BUSINESS DOCUMENTS =====
+  {
+    id: "invoice_generator",
+    name: "Invoice Generator",
+    description: "Create professional invoices with automatic calculations.",
+    type: "business",
+    basePrice: 299,
+    unit: "invoice",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "1-2 minutes"
+  },
+  {
+    id: "receipt_maker",
+    name: "Receipt Maker",
+    description: "Generate clean, printable receipts for business or personal use.",
+    type: "business",
+    basePrice: 199,
+    unit: "receipt",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "1 minute"
+  },
+  {
+    id: "business_letter_generator",
+    name: "Business Letter Generator",
+    description: "Produce formal business letters with correct formatting.",
+    type: "business",
+    basePrice: 299,
+    unit: "letter",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: false,
+    processingTime: "2-3 minutes"
+  },
+  {
+    id: "contract_template_builder",
+    name: "Contract Template Builder",
+    description: "Generate customizable contract templates for common agreements.",
+    type: "legal",
+    basePrice: 899,
+    unit: "contract",
+    maxFileSize: null,
+    supportedFormats: null,
+    outputFormat: ".pdf",
+    enabled: true,
+    popular: true,
+    processingTime: "5-10 minutes"
   }
 ];
+
+// Service type labels
+export const serviceTypes: Record<ServiceType, string> = {
+  conversion: "Document Conversion",
+  pdf_tools: "PDF Tools",
+  ocr: "OCR & Scanning",
+  fax: "Fax Services",
+  security: "Security & Privacy",
+  ai: "AI Document Services",
+  image: "Image Tools",
+  utility: "File Utilities",
+  transcription: "Audio & Video",
+  legal: "Legal Documents",
+  career: "Career Documents",
+  business: "Business Documents",
+  bundle: "Document Bundles"
+};
 
 // Helper functions
 export const getServiceById = (id: string): FileSolvedService | undefined => {
@@ -819,41 +825,27 @@ export const getServicesByType = (type: ServiceType): FileSolvedService[] => {
   return servicesCatalog.filter(s => s.type === type && s.enabled);
 };
 
-export const getServicesByTag = (tag: string): FileSolvedService[] => {
-  return servicesCatalog.filter(s => s.tags.includes(tag) && s.enabled);
-};
-
-export const searchServices = (query: string): FileSolvedService[] => {
-  const lowerQuery = query.toLowerCase();
-  return servicesCatalog.filter(s => 
-    s.enabled && (
-      s.name.toLowerCase().includes(lowerQuery) ||
-      s.description.toLowerCase().includes(lowerQuery) ||
-      s.tags.some(t => t.toLowerCase().includes(lowerQuery))
-    )
-  );
-};
-
-export const formatPrice = (priceInCents: number): string => {
-  return `$${(priceInCents / 100).toFixed(2)}`;
+export const getPopularServices = (): FileSolvedService[] => {
+  return servicesCatalog.filter(s => s.popular && s.enabled);
 };
 
 export const getEnabledServices = (): FileSolvedService[] => {
   return servicesCatalog.filter(s => s.enabled);
 };
 
-// Service type labels
-export const serviceTypeLabels: Record<ServiceType, string> = {
-  conversion: 'Document Conversion',
-  ocr: 'OCR & Text Extraction',
-  fax: 'Fax Services',
-  shredding: 'Secure Shredding',
-  bundle: 'Service Bundles',
-  grievance: 'Grievance & Complaints',
-  notary: 'Notary Services',
-  legal: 'Legal Documents',
-  medical: 'Medical Documents',
-  financial: 'Financial Documents'
+export const formatPrice = (priceInCents: number): string => {
+  return `$${(priceInCents / 100).toFixed(2)}`;
+};
+
+export const searchServices = (query: string): FileSolvedService[] => {
+  const lowerQuery = query.toLowerCase();
+  return servicesCatalog.filter(s =>
+    s.enabled && (
+      s.name.toLowerCase().includes(lowerQuery) ||
+      s.description.toLowerCase().includes(lowerQuery) ||
+      s.type.toLowerCase().includes(lowerQuery)
+    )
+  );
 };
 
 export default servicesCatalog;
