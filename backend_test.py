@@ -103,11 +103,12 @@ class FileSolvedAPITester:
             # Clean up temp file
             os.unlink(temp_file_path)
             
-            success = response.status_code == 200
+            success = response.status_code == 201
             details = f"Status: {response.status_code}"
             if success:
                 data = response.json()
-                details += f", File ID: {data.get('file_id', 'unknown')[:8]}..."
+                details += f", File ID: {data.get('fileId', 'unknown')[:8]}..."
+                self.log_result("File Upload", success, details)
                 return success, data
             else:
                 details += f", Error: {response.text[:100]}"
