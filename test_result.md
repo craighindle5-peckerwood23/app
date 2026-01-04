@@ -275,6 +275,54 @@ backend:
         agent: "main"
         comment: "AI placeholder - needs actual AI provider integration"
 
+  - task: "Subscription Plans API - GET /api/subscription/plans"
+    implemented: true
+    working: true
+    file: "/app/backend/src/routes/subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - Returns 'All Tools Access' plan at $5.99/month correctly. Plan ID: all_tools_access, Price: 599 cents ($5.99), Name: 'All Tools Access'"
+
+  - task: "Subscription Flow - Create/Activate"
+    implemented: true
+    working: true
+    file: "/app/backend/src/routes/subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - Complete flow working: POST /api/subscription/create with email/name/planId creates pending subscription, POST /api/subscription/activate activates it, GET /api/subscription/status shows active status"
+
+  - task: "Subscription Status Check"
+    implemented: true
+    working: true
+    file: "/app/backend/src/routes/subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - GET /api/subscription/status?email=test@example.com returns active subscription status correctly"
+
+  - task: "Subscription Access Check"
+    implemented: true
+    working: true
+    file: "/app/backend/src/routes/subscription.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - POST /api/subscription/check-access with email and serviceId returns hasAccess: true for subscribed users"
+
 frontend:
   - task: "Homepage loads"
     implemented: true
