@@ -13,6 +13,8 @@ import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import PricingPage from "./pages/PricingPage";
+import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
 
 const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID;
 
