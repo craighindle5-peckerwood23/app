@@ -5,6 +5,7 @@ const axios = require('axios');
 const { Order, Payment, Analytics } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { processOrder } = require('../services/processor');
+const { sendPaymentReceipt } = require('../services/emailService');
 
 const PAYPAL_BASE_URL = process.env.PAYPAL_BASE_URL || 'https://api-m.paypal.com';
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
