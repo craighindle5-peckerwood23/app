@@ -154,6 +154,11 @@ router.post('/capture-order', async (req, res) => {
         amount: payment.amount
       });
 
+      // Send payment receipt email (async, don't wait)
+      sendPaymentReceipt(order.customerEmail, order.toObject(), { paypalOrderId }).catch(err => {
+        console.error('Failed to send payment receipt email:', err);
+      });
+
       // Start processing in background
       processOrder(orderId).catch(err => {
         console.error('Background processing error:', err);
