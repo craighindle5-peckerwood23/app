@@ -72,8 +72,8 @@ const PricingPage = () => {
   const features = [
     { icon: Infinity, text: 'Unlimited usage of all 50+ tools' },
     { icon: Zap, text: 'Priority processing - no waiting' },
-    { icon: Scan, text: 'Premium OCR & scanning tools' },
-    { icon: Fax, text: 'Fax sending & receiving' },
+    { icon: ScanLine, text: 'Premium OCR & scanning tools' },
+    { icon: PhoneForwarded, text: 'Fax sending & receiving' },
     { icon: Brain, text: 'AI document tools' },
     { icon: Lock, text: 'Secure shredding tools' },
     { icon: Shield, text: 'No ads - clean experience' },
