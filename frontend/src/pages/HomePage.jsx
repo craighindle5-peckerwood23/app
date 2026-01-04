@@ -149,10 +149,10 @@ const HomePage = () => {
     >
       {/* SECTION 1 — HERO WITH IMAGE */}
       <section className="relative overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image - Man at desk */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/ai-assistant.jpg" 
+            src="/hero-fs-logo.png" 
             alt="FileSolved - Document Solutions" 
             className="w-full h-full object-cover"
           />
