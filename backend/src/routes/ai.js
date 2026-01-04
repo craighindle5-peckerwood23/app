@@ -1,4 +1,4 @@
-// src/routes/ai.js - AI Integration Routes
+// src/routes/ai.js - AI Integration Routes with GPT-4o via Emergent LLM Key
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
@@ -6,28 +6,51 @@ const { AISession, File, Analytics } = require('../models');
 const { optionalAuth } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 const fs = require('fs');
+const OpenAI = require('openai').default;
+const { getServiceById, getEnabledServices, searchServices } = require('../config/servicesCatalog');
 
-// AI Provider abstraction (placeholder for actual implementation)
-const getAIResponse = async (prompt, options = {}) => {
-  // This is a placeholder - integrate with OpenAI/Anthropic as needed
-  const { maxTokens = 500, model = 'gpt-4' } = options;
-  
-  // For now, return a simulated response
-  // In production, integrate with actual AI provider
-  return {
-    response: `AI analysis of your document would appear here. This is a placeholder response. The actual implementation would use ${model} with max ${maxTokens} tokens.`,
-    tokensUsed: 100,
-    model
-  };
-};
+// Initialize OpenAI client with Emergent LLM Key
+const openai = new OpenAI({
+  apiKey: process.env.EMERGENT_LLM_KEY,
+});
+
+// System prompt for FileSolved AI Assistant
+const SYSTEM_PROMPT = `You are the FileSolved AI Assistant - a helpful guide for people navigating disputes with landlords, employers, government agencies, and other powerful entities.
+
+FileSolved is a PUBLIC EMPOWERMENT PLATFORM that helps everyday people:
+- Document abuse, negligence, and misconduct
+- Organize evidence into structured case files
+- Generate professional complaints, letters, and reports
+- Convert and process documents (PDF, Word, OCR, etc.)
+
+Your role:
+1. Understand the user's situation (landlord dispute, workplace issue, police misconduct, etc.)
+2. Guide them to the right tools and bundles
+3. Explain how to document evidence effectively
+4. Be empathetic but professional
+5. Never provide legal advice - recommend consulting a lawyer for legal matters
+
+Key bundles we offer:
+- Landlord Protection Bundle: For housing disputes, unsafe conditions, retaliation
+- Officer Misconduct Bundle: For police complaints, civil rights violations
+- ICE & Immigration Bundle: For immigration document preparation
+- Lawyer & Fiduciary Bundle: For disputes with attorneys or trustees
+- HOA & Homeowner Bundle: For HOA disputes, property issues
+- Community Improvement Bundle: For neighborhood concerns, local government
+
+Key tools:
+- Evidence Builder: Organize photos, recordings, documents with timestamps
+- Complaint Generator: Create structured complaints for agencies
+- PDF Tools: Convert, merge, compress, sign documents
+- Case File Organizer: Build timeline-based case files
+
+Be concise, helpful, and action-oriented. Ask clarifying questions when needed.`;
 
 // Extract text from file (simplified)
 const extractText = async (fileId) => {
   const file = await File.findOne({ fileId });
   if (!file) throw new Error('File not found');
   
-  // Read file content - simplified for demo
-  // In production, use proper PDF/DOC parsers
   if (fs.existsSync(file.storagePath)) {
     const content = fs.readFileSync(file.storagePath, 'utf-8').substring(0, 10000);
     return content || 'Unable to extract text from this file type.';
@@ -35,6 +58,93 @@ const extractText = async (fileId) => {
   
   return 'File content would be extracted here.';
 };
+
+// POST /api/ai/chat - Main chat endpoint for AI Assistant
+router.post('/chat', rateLimiter.ai, optionalAuth, async (req, res) => {
+  try {
+    const { message, sessionId, context } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Get or create session
+    let session;
+    const sid = sessionId || uuidv4();
+
+    if (sessionId) {
+      session = await AISession.findOne({ sessionId });
+    }
+
+    if (!session) {
+      session = new AISession({
+        sessionId: sid,
+        userId: req.user?.userId,
+        messages: [],
+        context: context || {}
+      });
+    }
+
+    // Build messages array for OpenAI
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT }
+    ];
+
+    // Add conversation history (last 10 messages)
+    const historyMessages = session.messages.slice(-10).map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+    messages.push(...historyMessages);
+
+    // Add current user message
+    messages.push({ role: 'user', content: message });
+
+    // Call OpenAI
+    const completion = await openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-4o',
+      messages,
+      max_tokens: 800,
+      temperature: 0.7,
+    });
+
+    const assistantMessage = completion.choices[0].message.content;
+
+    // Save messages to session
+    session.messages.push(
+      { role: 'user', content: message, timestamp: new Date() },
+      { role: 'assistant', content: assistantMessage, timestamp: new Date() }
+    );
+    session.tokensUsed = (session.tokensUsed || 0) + (completion.usage?.total_tokens || 0);
+    session.lastActivity = new Date();
+    await session.save();
+
+    // Track usage
+    await Analytics.create({
+      event: 'ai_chat',
+      userId: req.user?.userId,
+      details: { sessionId: sid, tokensUsed: completion.usage?.total_tokens }
+    }).catch(() => {});
+
+    res.json({
+      response: assistantMessage,
+      sessionId: sid,
+      tokensUsed: completion.usage?.total_tokens
+    });
+  } catch (error) {
+    console.error('AI Chat error:', error);
+    
+    // Check for specific error types
+    if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+      return res.status(429).json({ 
+        error: 'AI service temporarily unavailable. Please try again later.',
+        code: 'QUOTA_EXCEEDED'
+      });
+    }
+    
+    res.status(500).json({ error: 'Failed to process your message. Please try again.' });
+  }
+});
 
 // POST /api/ai/summarize - Summarize document
 router.post('/summarize', rateLimiter.ai, optionalAuth, async (req, res) => {
@@ -47,21 +157,26 @@ router.post('/summarize', rateLimiter.ai, optionalAuth, async (req, res) => {
 
     const text = await extractText(fileId);
     
-    const prompt = `Summarize the following document in ${style} format. Maximum length: ${maxLength} words.\n\nDocument:\n${text}`;
-    
-    const result = await getAIResponse(prompt, { maxTokens: maxLength });
-
-    // Track usage
-    await Analytics.create({
-      event: 'ai_summarize',
-      userId: req.user?.userId,
-      details: { fileId, tokensUsed: result.tokensUsed }
+    const completion = await openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are a document summarization assistant. Provide clear, concise summaries.' 
+        },
+        { 
+          role: 'user', 
+          content: `Summarize the following document in ${style} format. Maximum length: ${maxLength} words.\n\nDocument:\n${text}` 
+        }
+      ],
+      max_tokens: maxLength,
+      temperature: 0.5,
     });
 
     res.json({
-      summary: result.response,
-      tokensUsed: result.tokensUsed,
-      model: result.model
+      summary: completion.choices[0].message.content,
+      tokensUsed: completion.usage?.total_tokens,
+      model: process.env.AI_MODEL || 'gpt-4o'
     });
   } catch (error) {
     console.error('Summarize error:', error);
@@ -79,128 +194,111 @@ router.post('/classify', rateLimiter.ai, optionalAuth, async (req, res) => {
     }
 
     const categories = [
-      'invoice', 'receipt', 'contract', 'legal_document',
-      'letter', 'report', 'form', 'certificate', 'resume', 'other'
+      'invoice', 'receipt', 'contract', 'legal_document', 'lease',
+      'letter', 'report', 'form', 'certificate', 'resume', 
+      'evidence_photo', 'correspondence', 'complaint', 'other'
     ];
 
     const text = await extractText(fileId);
     
-    const prompt = `Classify this document into one of these categories: ${categories.join(', ')}\n\nDocument preview:\n${text.substring(0, 2000)}\n\nRespond with JSON: {"category": "...", "confidence": 0.0-1.0, "reasoning": "..."}`;
-    
-    const result = await getAIResponse(prompt, { maxTokens: 150 });
+    const completion = await openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are a document classification assistant. Respond only with valid JSON.' 
+        },
+        { 
+          role: 'user', 
+          content: `Classify this document into one of these categories: ${categories.join(', ')}\n\nDocument preview:\n${text.substring(0, 2000)}\n\nRespond with JSON: {"category": "...", "confidence": 0.0-1.0, "reasoning": "..."}` 
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.3,
+    });
 
-    // Simulated classification result
-    const classification = {
-      category: 'document',
-      confidence: 0.85,
-      reasoning: 'Based on document structure and content patterns.'
-    };
-
-    res.json(classification);
+    try {
+      const result = JSON.parse(completion.choices[0].message.content);
+      res.json(result);
+    } catch {
+      res.json({
+        category: 'other',
+        confidence: 0.5,
+        reasoning: completion.choices[0].message.content
+      });
+    }
   } catch (error) {
     console.error('Classify error:', error);
     res.status(500).json({ error: 'Classification failed' });
   }
 });
 
-// POST /api/ai/chat - Chat about document
-router.post('/chat', rateLimiter.ai, optionalAuth, async (req, res) => {
-  try {
-    const { fileId, sessionId, message } = req.body;
-
-    if (!fileId || !message) {
-      return res.status(400).json({ error: 'File ID and message required' });
-    }
-
-    // Get or create session
-    let session;
-    const sid = sessionId || uuidv4();
-
-    if (sessionId) {
-      session = await AISession.findOne({ sessionId });
-    }
-
-    if (!session) {
-      session = new AISession({
-        sessionId: sid,
-        fileId,
-        userId: req.user?.userId,
-        messages: []
-      });
-    }
-
-    // Add user message
-    session.messages.push({
-      role: 'user',
-      content: message,
-      timestamp: new Date()
-    });
-
-    const text = await extractText(fileId);
-    
-    // Build conversation context
-    const conversationHistory = session.messages.slice(-10).map(m => 
-      `${m.role}: ${m.content}`
-    ).join('\n');
-
-    const prompt = `You are a helpful assistant answering questions about a document.\n\nDocument content:\n${text.substring(0, 8000)}\n\nConversation:\n${conversationHistory}\n\nProvide a helpful, accurate answer based on the document content.`;
-    
-    const result = await getAIResponse(prompt, { maxTokens: 500 });
-
-    // Add assistant response
-    session.messages.push({
-      role: 'assistant',
-      content: result.response,
-      timestamp: new Date()
-    });
-
-    session.tokensUsed += result.tokensUsed;
-    session.lastActivity = new Date();
-    await session.save();
-
-    res.json({
-      response: result.response,
-      sessionId: sid
-    });
-  } catch (error) {
-    console.error('Chat error:', error);
-    res.status(500).json({ error: 'Chat failed' });
-  }
-});
-
-// POST /api/ai/suggest - Suggest service based on file
+// POST /api/ai/suggest - Suggest services based on user's situation
 router.post('/suggest', rateLimiter.ai, optionalAuth, async (req, res) => {
   try {
-    const { fileId, mimeType, fileName } = req.body;
+    const { situation, fileType, mimeType } = req.body;
 
-    // Simple rule-based suggestions (can be enhanced with AI)
     const suggestions = [];
-    const ext = fileName?.split('.').pop()?.toLowerCase();
 
-    if (mimeType === 'application/pdf' || ext === 'pdf') {
-      suggestions.push(
-        { serviceId: 'pdf_to_word', reason: 'Convert to editable Word document' },
-        { serviceId: 'ocr_pdf', reason: 'Extract searchable text from scanned pages' },
-        { serviceId: 'pdf_compress', reason: 'Reduce file size for sharing' }
-      );
-    } else if (mimeType?.includes('image') || ['jpg', 'jpeg', 'png'].includes(ext)) {
-      suggestions.push(
-        { serviceId: 'jpg_to_pdf', reason: 'Convert to PDF document' },
-        { serviceId: 'ocr_image', reason: 'Extract text from image' },
-        { serviceId: 'image_compress', reason: 'Reduce image file size' }
-      );
-    } else if (mimeType?.includes('word') || ['doc', 'docx'].includes(ext)) {
-      suggestions.push(
-        { serviceId: 'word_to_pdf', reason: 'Convert to PDF for sharing' },
-        { serviceId: 'pdf_to_word', reason: 'Create editable version' }
-      );
+    // If user describes a situation, use AI to suggest bundles
+    if (situation) {
+      const completion = await openai.chat.completions.create({
+        model: process.env.AI_MODEL || 'gpt-4o',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You help users find the right FileSolved tools. Based on their situation, suggest 2-3 relevant bundles or tools from this list:
+
+Bundles:
+- landlord_protection: Housing disputes, unsafe conditions, eviction threats
+- officer_misconduct: Police complaints, civil rights violations
+- ice_immigration: Immigration documents, FOIA requests
+- lawyer_fiduciary: Attorney/trustee disputes
+- hoa_homeowner: HOA conflicts, property issues
+- community_improvement: Local government, neighborhood issues
+
+Tools:
+- evidence_builder: Organize photos, recordings with timestamps
+- complaint_generator: Create formal complaints
+- pdf_tools: Convert, merge, compress documents
+- case_file_organizer: Build timeline case files
+
+Respond with JSON array: [{"serviceId": "...", "reason": "..."}]` 
+          },
+          { role: 'user', content: situation }
+        ],
+        max_tokens: 200,
+        temperature: 0.5,
+      });
+
+      try {
+        const aiSuggestions = JSON.parse(completion.choices[0].message.content);
+        suggestions.push(...aiSuggestions);
+      } catch {
+        // Fallback to general suggestions
+        suggestions.push(
+          { serviceId: 'evidence_builder', reason: 'Start documenting your situation' },
+          { serviceId: 'complaint_generator', reason: 'Create formal complaints' }
+        );
+      }
     }
 
-    // Add bundle suggestion
-    suggestions.push({
-      serviceId: 'emergency_bundle_basic',
-      reason: 'Fast-track processing for urgent needs'
-    });
+    // File-based suggestions
+    if (mimeType || fileType) {
+      const ext = fileType?.split('.').pop()?.toLowerCase();
+      
+      if (mimeType === 'application/pdf' || ext === 'pdf') {
+        suggestions.push(
+          { serviceId: 'pdf_to_word', reason: 'Convert to editable Word document' },
+          { serviceId: 'pdf_ocr', reason: 'Extract searchable text from scanned pages' }
+        );
+      } else if (mimeType?.includes('image') || ['jpg', 'jpeg', 'png'].includes(ext)) {
+        suggestions.push(
+          { serviceId: 'image_to_pdf', reason: 'Convert to PDF for case file' },
+          { serviceId: 'image_ocr', reason: 'Extract text from image' }
+        );
+      }
+    }
 
     res.json({ suggestions: suggestions.slice(0, 5) });
   } catch (error) {
@@ -209,27 +307,46 @@ router.post('/suggest', rateLimiter.ai, optionalAuth, async (req, res) => {
   }
 });
 
-// POST /api/ai/ocr-clean - Clean OCR output
-router.post('/ocr-clean', rateLimiter.ai, optionalAuth, async (req, res) => {
+// POST /api/ai/generate-complaint - Generate a complaint letter
+router.post('/generate-complaint', rateLimiter.ai, optionalAuth, async (req, res) => {
   try {
-    const { text } = req.body;
+    const { type, details, recipientInfo } = req.body;
 
-    if (!text) {
-      return res.status(400).json({ error: 'Text required' });
+    if (!type || !details) {
+      return res.status(400).json({ error: 'Complaint type and details required' });
     }
 
-    const prompt = `Clean and correct the following OCR-extracted text. Fix obvious OCR errors, restore proper formatting, and improve readability while preserving the original meaning:\n\n${text}`;
-    
-    const result = await getAIResponse(prompt, { maxTokens: text.length });
+    const completion = await openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: `You help create professional complaint letters. Generate formal, factual complaint letters that:
+- State facts clearly without legal conclusions
+- Include specific dates, times, and incidents
+- Request specific actions/remedies
+- Maintain professional tone
+- Include space for attachments/evidence references
+
+IMPORTANT: Add disclaimer that this is not legal advice and recommend consulting an attorney.` 
+        },
+        { 
+          role: 'user', 
+          content: `Generate a ${type} complaint letter with these details:\n${JSON.stringify(details)}\n\nRecipient: ${JSON.stringify(recipientInfo || {})}` 
+        }
+      ],
+      max_tokens: 1500,
+      temperature: 0.6,
+    });
 
     res.json({
-      cleanedText: result.response,
-      originalLength: text.length,
-      tokensUsed: result.tokensUsed
+      letter: completion.choices[0].message.content,
+      type,
+      tokensUsed: completion.usage?.total_tokens
     });
   } catch (error) {
-    console.error('OCR clean error:', error);
-    res.status(500).json({ error: 'OCR cleaning failed' });
+    console.error('Generate complaint error:', error);
+    res.status(500).json({ error: 'Failed to generate complaint' });
   }
 });
 
@@ -248,8 +365,7 @@ router.get('/sessions', optionalAuth, async (req, res) => {
     res.json({
       sessions: sessions.map(s => ({
         sessionId: s.sessionId,
-        fileId: s.fileId,
-        messageCount: s.messages.length,
+        messageCount: s.messages?.length || 0,
         lastActivity: s.lastActivity,
         tokensUsed: s.tokensUsed
       }))
@@ -257,6 +373,20 @@ router.get('/sessions', optionalAuth, async (req, res) => {
   } catch (error) {
     console.error('Sessions error:', error);
     res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// DELETE /api/ai/sessions/:sessionId - Delete a session
+router.delete('/sessions/:sessionId', optionalAuth, async (req, res) => {
+  try {
+    await AISession.deleteOne({ 
+      sessionId: req.params.sessionId,
+      ...(req.user ? { userId: req.user.userId } : {})
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete session error:', error);
+    res.status(500).json({ error: 'Failed to delete session' });
   }
 });
 
