@@ -10,12 +10,12 @@ const AIAssistant = () => {
       {/* Floating Button with Custom Logo */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 z-40 w-16 h-16 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center transition-all hover:scale-110 hover:shadow-blue-500/50 group overflow-hidden"
+        className="fixed bottom-24 right-6 z-40 w-16 h-16 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center transition-all hover:scale-110 hover:shadow-blue-500/50 group overflow-hidden border-2 border-slate-200"
         title="Need help? Ask the FileSolved Assistant."
         data-testid="ai-assistant-button"
       >
         <img 
-          src="/ai-assistant-logo.png" 
+          src="/ai-assistant-logo.jpg" 
           alt="FileSolved Assistant" 
           className="w-full h-full object-cover rounded-full"
         />
