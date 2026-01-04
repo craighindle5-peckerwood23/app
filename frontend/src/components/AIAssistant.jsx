@@ -7,7 +7,7 @@ const AIAssistant = () => {
 
   return (
     <>
-      {/* Floating Button with Custom Logo */}
+      {/* Floating Button with FS Logo */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-24 right-6 z-40 w-16 h-16 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center transition-all hover:scale-110 hover:shadow-blue-500/50 group overflow-hidden border-2 border-blue-400"
@@ -15,7 +15,7 @@ const AIAssistant = () => {
         data-testid="ai-assistant-button"
       >
         <img 
-          src="/hero-fs-logo.png" 
+          src="/fs-neon-logo.jpg" 
           alt="FileSolved Assistant" 
           className="w-full h-full object-cover rounded-full"
         />
