@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { Order, Analytics } = require('../models');
 const { getServiceById, calculatePrice, validateExtraFields } = require('../config/servicesCatalog');
 const { optionalAuth, authenticate } = require('../middleware/auth');
+const { sendOrderConfirmation } = require('../services/emailService');
 
 // POST /api/orders - Create a new order
 router.post('/', optionalAuth, async (req, res) => {
