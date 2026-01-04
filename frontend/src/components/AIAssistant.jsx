@@ -15,7 +15,7 @@ const AIAssistant = () => {
         data-testid="ai-assistant-button"
       >
         <img 
-          src="/ai-assistant-logo.jpg" 
+          src="/ai-assistant.jpg" 
           alt="FileSolved Assistant" 
           className="w-full h-full object-cover rounded-full"
         />
