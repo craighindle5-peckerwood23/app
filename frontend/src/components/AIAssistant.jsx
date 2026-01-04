@@ -41,7 +41,7 @@ const AIAssistant = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-400 shadow-lg shadow-blue-500/30">
                     <img 
-                      src="/hero-fs-logo.png" 
+                      src="/fs-neon-logo.jpg" 
                       alt="FileSolved" 
                       className="w-full h-full object-cover"
                     />
