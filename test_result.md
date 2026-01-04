@@ -375,6 +375,18 @@ frontend:
         agent: "main"
         comment: "Checkout page needs testing"
 
+  - task: "Pricing page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/PricingPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - Frontend pricing page at /pricing working correctly: Shows 'All Tools Access' heading, displays $5.99/month pricing, email input field functional, 'Upgrade for $5.99/month' button visible and working. Subscription flow integrated with backend APIs."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
