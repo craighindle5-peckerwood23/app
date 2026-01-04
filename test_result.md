@@ -279,7 +279,7 @@ frontend:
   - task: "Homepage loads"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/HomePage.js"
+    file: "/app/frontend/src/pages/HomePage.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -287,6 +287,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Homepage loads with hero section and navigation"
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE REDESIGN VERIFICATION COMPLETE ✅ All sections tested and working: 1) Hero Section: H1 'Turn your proof into power with FileSolved', subheadline about documenting abuse/negligence/misconduct, two CTA buttons ('Start a Case File' & 'Browse Tools & Bundles'), micro reassurance text ✅ 2) Community Empowerment: H2 'For people who are tired of being ignored, dismissed, or gaslit', body copy mentions renters/workers/caregivers ✅ 3) Empowerment Pillars: 3 columns (Capture, Organize, Act) with icons and descriptions ✅ 4) Featured Bundles: All 6 bundles found (Landlord Protection, Officer Misconduct, ICE & Immigration, Lawyer & Fiduciary, HOA & Homeowner, Community Improvement) ✅ 5) Services Section: All 4 services found (Evidence Builder, Complaint Generator, PDF Tools, Case File Organizer) ✅ 6) AI Assistant: Floating button opens modal with 3 options (Start Case File, Find Bundle, Ask Question) ✅ 7) Footer: Correct copyright with 'Not affiliated with FileSolve', 12 footer links ✅ 8) Navigation: Header 'Start a Case File' button, all nav links work ✅ 9) Mobile Responsive: Layout adapts properly, mobile menu works, all sections accessible. Minor: H1 text spacing issue (missing space between 'power' and 'with') but functionally correct."
 
   - task: "Services page loads"
     implemented: true
