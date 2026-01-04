@@ -551,6 +551,13 @@ class FileSolvedAPITester:
         # AI functionality tests
         self.test_ai_chat()
         
+        # NEW: Subscription system tests
+        print("\n🔄 Testing Subscription System...")
+        self.test_subscription_plans()
+        self.test_subscription_flow()
+        self.test_subscription_status_existing()
+        self.test_subscription_access_check()
+        
         # Print summary
         print("=" * 60)
         print(f"📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
@@ -568,7 +575,7 @@ class FileSolvedAPITester:
             'passed_tests': self.tests_passed,
             'failed_tests': self.failed_tests,
             'success_rate': success_rate,
-            'critical_failures': [f for f in self.failed_tests if any(keyword in f['test'].lower() for keyword in ['health', 'services', 'admin login'])]
+            'critical_failures': [f for f in self.failed_tests if any(keyword in f['test'].lower() for keyword in ['health', 'services', 'admin login', 'subscription'])]
         }
 
 def main():
