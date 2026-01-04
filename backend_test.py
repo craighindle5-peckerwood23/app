@@ -119,7 +119,7 @@ class FileSolvedAPITester:
             self.log_result("File Upload", False, f"Exception: {str(e)}")
             return False, None
     
-    def test_order_creation(self, file_data, service_id="pdf-to-word"):
+    def test_order_creation(self, file_data, service_id="pdf_to_word"):
         """Test order creation endpoint"""
         if not file_data:
             self.log_result("Order Creation", False, "No file data available")
