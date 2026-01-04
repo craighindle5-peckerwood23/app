@@ -11,7 +11,7 @@ const AIAssistant = () => {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-slate-900 hover:bg-slate-800 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 group"
+        className="fixed bottom-24 right-6 z-40 w-14 h-14 bg-slate-900 hover:bg-slate-800 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 group"
         title="Need help? Ask the FileSolved Assistant."
         data-testid="ai-assistant-button"
       >
