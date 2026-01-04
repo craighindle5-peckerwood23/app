@@ -32,6 +32,8 @@ function App() {
             <Route path="/confirmation/:orderId" element={<ConfirmationPage />} />
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             {/* New routes for bundles and tools - redirect to services for now */}
