@@ -128,8 +128,8 @@ class FileSolvedAPITester:
         try:
             form_data = {
                 'service_id': service_id,
-                'file_id': file_data['file_id'],
-                'file_name': file_data['file_name'],
+                'file_id': file_data['fileId'],
+                'file_name': file_data['fileName'],
                 'customer_email': 'test@filesolved.com',
                 'customer_name': 'Test User'
             }
