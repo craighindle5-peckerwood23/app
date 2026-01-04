@@ -42,7 +42,7 @@ router.get('/', (req, res) => {
 
 // GET /api/services/types - Get service type labels
 router.get('/types', (req, res) => {
-  res.json(serviceTypeLabels);
+  res.json(serviceTypes);
 });
 
 // GET /api/services/stats - Get service statistics
@@ -50,7 +50,7 @@ router.get('/stats', (req, res) => {
   const stats = {};
   const enabledServices = getEnabledServices();
   
-  for (const [type, label] of Object.entries(serviceTypeLabels)) {
+  for (const [type, label] of Object.entries(serviceTypes)) {
     const typeServices = enabledServices.filter(s => s.type === type);
     stats[type] = {
       label,
