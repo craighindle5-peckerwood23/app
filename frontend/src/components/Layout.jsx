@@ -1,20 +1,73 @@
 import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FileText, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { FileText, Menu, X, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
+
+// Dropdown component
+const NavDropdown = ({ label, items, isOpen, onToggle, onClose }) => {
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+      >
+        {label}
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.href}
+              className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              onClick={onClose}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const Layout = ({ children, title, description, schema }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const location = useLocation();
 
-  const navigation = [
-    { name: "Services", href: "/services" },
-    { name: "FAQ", href: "/faq" },
-    { name: "Contact", href: "/contact" },
+  const bundleItems = [
+    { name: "Landlord Protection", href: "/bundles/landlord-protection" },
+    { name: "Officer Misconduct", href: "/bundles/officer-misconduct" },
+    { name: "ICE & Immigration", href: "/bundles/ice-immigration" },
+    { name: "Lawyer & Fiduciary", href: "/bundles/lawyer-fiduciary" },
+    { name: "HOA & Homeowner", href: "/bundles/hoa-homeowner" },
+    { name: "Community Improvement", href: "/bundles/community-improvement" },
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const toolItems = [
+    { name: "Evidence Builder", href: "/tools/evidence-builder" },
+    { name: "Complaint Generator", href: "/tools/complaint-generator" },
+    { name: "PDF & Document Tools", href: "/tools/pdf-tools" },
+    { name: "Case File Organizer", href: "/tools/case-file-organizer" },
+    { name: "All Services", href: "/services" },
+  ];
+
+  const closeDropdown = () => setOpenDropdown(null);
 
   return (
     <div className="min-h-screen bg-white">
@@ -34,28 +87,42 @@ export const Layout = ({ children, title, description, schema }) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group" data-testid="logo-link">
-              <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center group-hover:bg-slate-800 transition-colors">
-                <FileText className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden">
+                <img src="/ai-assistant-logo.png" alt="FileSolved" className="w-full h-full object-cover" />
               </div>
               <span className="font-bold text-xl text-slate-900 tracking-tight">FileSolved</span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? "text-blue-600"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                  data-testid={`nav-${item.name.toLowerCase()}`}
-                >
-                  {item.name}
-                </Link>
-              ))}
+            {/* Desktop Navigation - Condensed with Dropdowns */}
+            <div className="hidden md:flex items-center gap-6">
+              <NavDropdown
+                label="Bundles"
+                items={bundleItems}
+                isOpen={openDropdown === 'bundles'}
+                onToggle={() => setOpenDropdown(openDropdown === 'bundles' ? null : 'bundles')}
+                onClose={closeDropdown}
+              />
+              <NavDropdown
+                label="Tools"
+                items={toolItems}
+                isOpen={openDropdown === 'tools'}
+                onToggle={() => setOpenDropdown(openDropdown === 'tools' ? null : 'tools')}
+                onClose={closeDropdown}
+              />
+              <Link
+                to="/faq"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                data-testid="nav-faq"
+              >
+                FAQ
+              </Link>
+              <Link
+                to="/contact"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                data-testid="nav-contact"
+              >
+                Contact
+              </Link>
               <Link to="/case-file/new" data-testid="nav-get-started">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
                   Start a Case File
@@ -76,16 +143,54 @@ export const Layout = ({ children, title, description, schema }) => {
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-slate-200">
-              {navigation.map((item) => (
+              {/* Bundles Section */}
+              <div className="py-2">
+                <p className="px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Bundles</p>
+                {bundleItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="block py-2 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+              
+              {/* Tools Section */}
+              <div className="py-2 border-t border-slate-100 mt-2">
+                <p className="px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Tools</p>
+                {toolItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="block py-2 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Other Links */}
+              <div className="py-2 border-t border-slate-100 mt-2">
                 <Link
-                  key={item.name}
-                  to={item.href}
-                  className="block py-3 text-slate-600 hover:text-slate-900 font-medium"
+                  to="/faq"
+                  className="block py-2 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {item.name}
+                  FAQ
                 </Link>
-              ))}
+                <Link
+                  to="/contact"
+                  className="block py-2 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+              </div>
+
               <Link
                 to="/case-file/new"
                 className="block mt-4"
@@ -110,8 +215,8 @@ export const Layout = ({ children, title, description, schema }) => {
             {/* Brand */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-slate-900" />
+                <div className="w-10 h-10 rounded-lg overflow-hidden">
+                  <img src="/ai-assistant-logo.png" alt="FileSolved" className="w-full h-full object-cover" />
                 </div>
                 <span className="font-bold text-xl">FileSolved</span>
               </div>
