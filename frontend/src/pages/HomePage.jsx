@@ -1,47 +1,125 @@
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
+import AIAssistant from "../components/AIAssistant";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
 import { 
-  FileText, FileOutput, Image, ScanText, Scan, Printer, Trash2, 
-  Shield, Zap, Clock, CheckCircle, ArrowRight, Scale, Users
+  Camera, FolderOpen, Send, ArrowRight, CheckCircle,
+  Home, Shield, Scale, Users, FileWarning, Building2,
+  FileText, PenLine, FileStack, FolderKanban
 } from "lucide-react";
-import { useServices, getPriceDisplay } from "../hooks/useServices";
 
-// Icon mapping
-const iconMap = { FileText, FileOutput, Image, ScanText, Scan, Printer, Trash2, Zap, Scale, Users };
-const getIcon = (name) => iconMap[name] || FileText;
-
-const features = [
-  { icon: Zap, title: "Lightning Fast", description: "Most files processed in under 30 seconds" },
-  { icon: Shield, title: "Bank-Level Security", description: "256-bit encryption for all uploads" },
-  { icon: Clock, title: "24/7 Availability", description: "Process documents anytime, anywhere" },
+// Bundle data
+const bundles = [
+  {
+    id: "landlord-protection",
+    title: "Landlord Protection Bundle",
+    description: "Document ignored repairs, retaliation, illegal entries, harassment, and unsafe living conditions.",
+    icon: Home,
+    color: "blue",
+    href: "/bundles/landlord-protection"
+  },
+  {
+    id: "officer-misconduct",
+    title: "Officer Misconduct Bundle",
+    description: "Log badge numbers, incidents, witnesses, recordings, and problematic interactions.",
+    icon: Shield,
+    color: "red",
+    href: "/bundles/officer-misconduct"
+  },
+  {
+    id: "ice-immigration",
+    title: "ICE & Immigration Grievance Bundle",
+    description: "Document threats, discrimination, due process violations, and agency misconduct.",
+    icon: FileWarning,
+    color: "orange",
+    href: "/bundles/ice-immigration"
+  },
+  {
+    id: "lawyer-fiduciary",
+    title: "Lawyer & Fiduciary Misconduct Bundle",
+    description: "Track missed deadlines, unexplained fees, ignored communication, and conflicts of interest.",
+    icon: Scale,
+    color: "purple",
+    href: "/bundles/lawyer-fiduciary"
+  },
+  {
+    id: "hoa-homeowner",
+    title: "HOA & Homeowner Dispute Bundle",
+    description: "Document selective enforcement, harassment, unfair fines, and board misconduct.",
+    icon: Building2,
+    color: "green",
+    href: "/bundles/hoa-homeowner"
+  },
+  {
+    id: "community-improvement",
+    title: "Community Improvement Bundle",
+    description: "Turn ideas and safety concerns into structured proposals for councils and boards.",
+    icon: Users,
+    color: "teal",
+    href: "/bundles/community-improvement"
+  }
 ];
 
+// Services data
+const services = [
+  {
+    id: "evidence-builder",
+    title: "Evidence Builder",
+    description: "Turn scattered screenshots, photos, messages, and notes into a clear, chronological record with dates, names, and locations.",
+    example: "A tenant logs every time the landlord ignored repair requests, attaching photos and texts. The Evidence Builder exports a timeline PDF for housing authorities.",
+    icon: FileText,
+    href: "/tools/evidence-builder"
+  },
+  {
+    id: "complaint-generator",
+    title: "Complaint & Grievance Letter Generator",
+    description: "Create structured, respectful, but firm letters. Choose who you're writing to—landlord, employer, HOA, agency, school—and get a ready-to-edit letter.",
+    example: "A worker documents unpaid overtime and uses the generator to create a formal complaint letter to HR and the labor board.",
+    icon: PenLine,
+    href: "/tools/complaint-generator"
+  },
+  {
+    id: "pdf-tools",
+    title: "PDF & Document Tools",
+    description: "Convert images to PDF, merge multiple files, redact sensitive information, and create labeled evidence packets that are clean and professional.",
+    example: "A parent compiles school incident emails, screenshots, and photos into one organized PDF to present to the principal and school board.",
+    icon: FileStack,
+    href: "/tools/pdf-tools"
+  },
+  {
+    id: "case-file-organizer",
+    title: "Case File Organizer",
+    description: "Create a \"case file\" for each situation—your landlord, employer, HOA dispute. Group documents, notes, and letters so each conflict stays organized.",
+    example: "Someone dealing with both a landlord problem and a custody issue runs two separate case files so each conflict remains organized.",
+    icon: FolderKanban,
+    href: "/tools/case-file-organizer"
+  }
+];
+
+// Pillar colors
+const pillarColors = {
+  blue: "bg-blue-100 text-blue-600",
+  purple: "bg-purple-100 text-purple-600",
+  green: "bg-green-100 text-green-600"
+};
+
+// Bundle colors
+const bundleColors = {
+  blue: { bg: "bg-blue-50 hover:bg-blue-100", icon: "bg-blue-100 text-blue-600" },
+  red: { bg: "bg-red-50 hover:bg-red-100", icon: "bg-red-100 text-red-600" },
+  orange: { bg: "bg-orange-50 hover:bg-orange-100", icon: "bg-orange-100 text-orange-600" },
+  purple: { bg: "bg-purple-50 hover:bg-purple-100", icon: "bg-purple-100 text-purple-600" },
+  green: { bg: "bg-green-50 hover:bg-green-100", icon: "bg-green-100 text-green-600" },
+  teal: { bg: "bg-teal-50 hover:bg-teal-100", icon: "bg-teal-100 text-teal-600" }
+};
+
 const HomePage = () => {
-  // Fetch services from catalog
-  const { services, loading } = useServices();
-  
-  // Get featured services (first 8 conversion/ocr services)
-  const featuredServices = services
-    .filter(s => ['conversion', 'ocr'].includes(s.type))
-    .slice(0, 8);
-  
-  // Get emergency bundles
-  const emergencyBundles = services
-    .filter(s => s.type === 'bundle')
-    .slice(0, 3);
-  
-  // Get grievance services
-  const legalServices = services
-    .filter(s => ['grievance', 'legal'].includes(s.type))
-    .slice(0, 4);
   const homeSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "FileSolved",
     "url": "https://filesolved.com",
-    "description": "Professional document services: PDF conversion, OCR, scanning, faxing, and secure shredding.",
+    "description": "FileSolved is a public empowerment platform that helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into actionable reports, letters, and bundles.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://filesolved.com/services?q={search_term_string}",
@@ -55,6 +133,7 @@ const HomePage = () => {
     "name": "FileSolved",
     "url": "https://filesolved.com",
     "logo": "https://filesolved.com/logo.png",
+    "description": "FileSolved is a digital, public-facing platform that helps people build evidence, letters, and documentation for real-world problems.",
     "contactPoint": {
       "@type": "ContactPoint",
       "email": "support@filesolved.com",
@@ -64,136 +143,200 @@ const HomePage = () => {
 
   return (
     <Layout 
-      title="Professional Document Services" 
-      description="FileSolved offers fast, secure document processing: PDF conversion, OCR text extraction, document scanning, faxing, and secure shredding. One upload, problem solved."
+      title="Turn Your Proof Into Power" 
+      description="FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use."
       schema={[homeSchema, organizationSchema]}
     >
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Hero Content */}
-            <div className="lg:col-span-7">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                One Upload.
-                <span className="block text-blue-600">Problem Solved.</span>
-              </h1>
-              <p className="mt-6 text-lg text-slate-600 max-w-xl">
-                Professional document services at your fingertips. Convert, extract, scan, fax, or securely destroy documents in seconds.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link to="/upload" data-testid="hero-get-started">
-                  <Button className="btn-primary text-lg px-8 py-4 w-full sm:w-auto">
-                    Get Started Free
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <Link to="/services" data-testid="hero-view-services">
-                  <Button variant="outline" className="btn-secondary text-lg px-8 py-4 w-full sm:w-auto">
-                    View All Services
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-8 flex items-center gap-6 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span>No signup required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span>Pay per use</span>
-                </div>
-              </div>
+      {/* SECTION 1 — HERO */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Turn your proof into power
+              <span className="block text-blue-600">with FileSolved</span>
+            </h1>
+            <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+              FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/case-file/new" data-testid="hero-start-case">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 w-full sm:w-auto rounded-xl shadow-lg shadow-blue-600/25">
+                  Start a Case File
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/services" data-testid="hero-browse-tools">
+                <Button variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto rounded-xl border-2">
+                  Browse Tools & Bundles
+                </Button>
+              </Link>
             </div>
+            <p className="mt-8 text-sm text-slate-500 flex items-center justify-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              No legal jargon. No gatekeeping. Just tools that help you stand up for yourself.
+            </p>
+          </div>
+        </div>
+        
+        {/* Decorative gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
+      </section>
 
-            {/* Hero Image */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1537655949728-d4e1c7c7bf90?crop=entropy&cs=srgb&fm=jpg&q=85&w=600" 
-                  alt="Professional workspace with documents"
-                  className="rounded-xl shadow-2xl"
-                />
-                <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-lg shadow-lg border border-slate-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">File Processed</p>
-                      <p className="text-sm text-slate-500">in 2.3 seconds</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* SECTION 2 — COMMUNITY EMPOWERMENT */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+            For people who are tired of being
+            <span className="block text-blue-600">ignored, dismissed, or gaslit</span>
+          </h2>
+          <div className="mt-8 text-lg text-slate-600 leading-relaxed space-y-4 text-left sm:text-center">
+            <p>
+              FileSolved exists for renters, workers, caregivers, homeowners, students, immigrants, and anyone who's ever thought: <em>"I know this is wrong… but I don't know how to fight it."</em>
+            </p>
+            <p>
+              We give you simple, guided tools to capture what happened, organize your evidence, and turn it into letters, complaints, and reports you can send to landlords, agencies, lawyers, or community leaders.
+            </p>
+            <p className="font-medium text-slate-900">
+              You don't need to be a lawyer. You just need the truth and a little structure. FileSolved gives you both.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-4" data-testid={`feature-${index}`}>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <feature.icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">{feature.title}</h3>
-                  <p className="text-slate-600 text-sm mt-1">{feature.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-24">
+      {/* SECTION 3 — EMPOWERMENT PILLARS */}
+      <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-              Document Services That Work
+              How We Empower You
             </h2>
-            <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-              Choose from our range of professional document processing services. Fast, reliable, and secure.
+            <p className="mt-4 text-lg text-slate-600">
+              Three simple steps to turn chaos into evidence
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {loading ? (
-              <div className="col-span-4 text-center py-12 text-slate-500">Loading services...</div>
-            ) : (
-              featuredServices.map((service) => {
-                const IconComponent = getIcon(service.icon);
-                return (
-                  <Link 
-                    key={service.id} 
-                    to={`/services/${service.id}`}
-                    className="service-card group"
-                    data-testid={`service-card-${service.id}`}
-                  >
-                    <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                      <IconComponent className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            {/* Pillar 1: Capture */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow" data-testid="pillar-capture">
+              <div className={`w-16 h-16 ${pillarColors.blue} rounded-2xl flex items-center justify-center mb-6`}>
+                <Camera className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Capture</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Upload screenshots, photos, messages, receipts, and notes. FileSolved helps you turn raw chaos into clear, timestamped records so your story can't be brushed off as "he said, she said."
+              </p>
+            </div>
+
+            {/* Pillar 2: Organize */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow" data-testid="pillar-organize">
+              <div className={`w-16 h-16 ${pillarColors.purple} rounded-2xl flex items-center justify-center mb-6`}>
+                <FolderOpen className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Organize</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Convert, merge, and structure your documents into clean, labeled PDFs and timelines. Our tools help you group incidents by date, offender, location, and type of harm.
+              </p>
+            </div>
+
+            {/* Pillar 3: Act */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow" data-testid="pillar-act">
+              <div className={`w-16 h-16 ${pillarColors.green} rounded-2xl flex items-center justify-center mb-6`}>
+                <Send className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Act</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Generate tailored letters, complaints, and report bundles for specific situations—landlord abuse, officer misconduct, HOA disputes, lack of transparency—so you know exactly what to send and where.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — FEATURED BUNDLES */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              Guided Bundles for Your Situation
+            </h2>
+            <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+              Pre-structured collections of tools, templates, and instructions tailored for specific types of conflicts.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bundles.map((bundle) => {
+              const colors = bundleColors[bundle.color];
+              const IconComponent = bundle.icon;
+              return (
+                <Link
+                  key={bundle.id}
+                  to={bundle.href}
+                  className={`${colors.bg} rounded-2xl p-6 transition-all hover:scale-[1.02] border border-transparent hover:border-slate-200`}
+                  data-testid={`bundle-${bundle.id}`}
+                >
+                  <div className={`w-12 h-12 ${colors.icon} rounded-xl flex items-center justify-center mb-4`}>
+                    <IconComponent className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{bundle.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{bundle.description}</p>
+                  <div className="mt-4 flex items-center text-sm font-medium text-slate-900">
+                    Learn more <ArrowRight className="ml-1 w-4 h-4" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5 — SERVICES OVERVIEW */}
+      <section className="py-20 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Core Tools & Services
+            </h2>
+            <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
+              Individual tools to help you capture, organize, and act on your evidence
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {services.map((service) => {
+              const IconComponent = service.icon;
+              return (
+                <div 
+                  key={service.id} 
+                  className="bg-slate-800 rounded-2xl p-8 border border-slate-700 hover:border-slate-600 transition-colors"
+                  data-testid={`service-${service.id}`}
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="font-semibold text-slate-900 mb-1">{service.name}</h3>
-                    <p className="text-sm text-slate-500 mb-3">{service.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-blue-600 font-semibold">{getPriceDisplay(service)}</span>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">{service.title}</h3>
+                      <p className="text-slate-400 leading-relaxed">{service.description}</p>
                     </div>
-                  </Link>
-                );
-              })
-            )}
+                  </div>
+                  <div className="mt-6 pl-16">
+                    <div className="bg-slate-700/50 rounded-xl p-4">
+                      <p className="text-sm text-slate-300">
+                        <span className="font-semibold text-blue-400">Example: </span>
+                        {service.example}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/services" data-testid="view-all-services">
-              <Button variant="outline" className="btn-secondary">
-                View All Services
+            <Link to="/services" data-testid="services-view-all">
+              <Button variant="outline" className="text-white border-slate-600 hover:bg-slate-800 px-8 py-4">
+                View All Tools
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -201,118 +344,33 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Emergency Bundles Section */}
-      {emergencyBundles.length > 0 && (
-        <section className="py-16 bg-slate-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <Badge className="bg-yellow-500 text-black mb-4">Priority Processing</Badge>
-              <h2 className="text-3xl font-bold">Emergency & Bundle Services</h2>
-              <p className="mt-2 text-slate-400">Fast-track your urgent document needs</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {emergencyBundles.map(bundle => (
-                <Link 
-                  key={bundle.id}
-                  to={`/services/${bundle.id}`}
-                  className="bg-slate-800 rounded-lg p-6 hover:bg-slate-700 transition-colors border border-slate-700"
-                  data-testid={`bundle-${bundle.id}`}
-                >
-                  <Zap className="w-10 h-10 text-yellow-400 mb-4" />
-                  <h3 className="font-semibold text-xl">{bundle.name}</h3>
-                  <p className="text-slate-400 text-sm mt-2 line-clamp-2">{bundle.description}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-2xl font-bold text-yellow-400">${bundle.price.toFixed(2)}</span>
-                    <ArrowRight className="w-5 h-5 text-slate-400" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Legal & Grievance Services */}
-      {legalServices.length > 0 && (
-        <section className="py-16 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900">Legal & Grievance Services</h2>
-              <p className="mt-2 text-slate-600">Professional document preparation for legal matters</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {legalServices.map(service => (
-                <Link 
-                  key={service.id}
-                  to={`/services/${service.id}`}
-                  className="card-base p-6 card-hover"
-                  data-testid={`legal-${service.id}`}
-                >
-                  <Scale className="w-8 h-8 text-purple-600 mb-4" />
-                  <h3 className="font-semibold text-slate-900">{service.name}</h3>
-                  <p className="text-sm text-slate-500 mt-2 line-clamp-2">{service.description}</p>
-                  <p className="text-purple-600 font-semibold mt-4">${service.price.toFixed(2)}</p>
-                </Link>
-              ))}
-            </div>
-            <div className="text-center mt-8">
-              <Link to="/services?type=grievance">
-                <Button variant="outline" className="btn-secondary">
-                  View All Legal Services <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* How It Works Section */}
-      <section className="py-24 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              How It Works
-            </h2>
-            <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-              Three simple steps to process your documents
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {[
-              { step: "1", title: "Upload", description: "Drag and drop your file or click to browse. We support PDF, DOC, DOCX, JPG, PNG, and more." },
-              { step: "2", title: "Choose Service", description: "Select the service you need: conversion, OCR, scanning, faxing, or secure deletion." },
-              { step: "3", title: "Download", description: "Pay securely with PayPal and receive your processed file instantly via email." },
-            ].map((item, index) => (
-              <div key={index} className="text-center" data-testid={`how-it-works-${index}`}>
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-slate-400">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24">
+      {/* SECTION 6 — CTA */}
+      <section className="py-20 bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-            Ready to Get Started?
+            Ready to Turn Your Proof Into Power?
           </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            Upload your first document and see the difference. No signup required.
+          <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+            Start documenting your situation today. No signup required—just choose your bundle or start a case file.
           </p>
-          <Link to="/upload" data-testid="cta-upload">
-            <Button className="btn-accent mt-8 text-lg px-10 py-4">
-              Upload Your Document
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/case-file/new" data-testid="cta-start-case">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 w-full sm:w-auto rounded-xl shadow-lg shadow-blue-600/25">
+                Start Your Case File
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/services" data-testid="cta-browse">
+              <Button variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto rounded-xl border-2">
+                Browse All Bundles
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
+
+      {/* SECTION 7 — AI ASSISTANT (Floating) */}
+      <AIAssistant />
     </Layout>
   );
 };
