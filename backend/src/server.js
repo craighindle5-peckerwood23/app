@@ -92,6 +92,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // 404 handler
 app.use('/api/*', (req, res) => {
