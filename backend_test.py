@@ -360,6 +360,139 @@ class FileSolvedAPITester:
         
         return all_passed
     
+    def test_subscription_plans(self):
+        """Test subscription plans endpoint"""
+        try:
+            response = self.session.get(f"{self.base_url}/subscription/plans", timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                plans = data.get('plans', [])
+                details += f", Plans count: {len(plans)}"
+                # Check for "All Tools Access" plan at $5.99/month
+                all_tools_plan = next((p for p in plans if p.get('id') == 'all_tools_access'), None)
+                if all_tools_plan:
+                    price_check = all_tools_plan.get('priceMonthly') == 599  # $5.99 in cents
+                    name_check = all_tools_plan.get('name') == 'All Tools Access'
+                    details += f", All Tools Access found: {name_check}, Price correct: {price_check}"
+                    success = success and price_check and name_check
+                else:
+                    success = False
+                    details += ", All Tools Access plan not found"
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Subscription Plans", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Subscription Plans", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_subscription_flow(self):
+        """Test complete subscription flow: create -> activate -> status"""
+        test_email = "newuser@test.com"
+        test_name = "New User"
+        
+        try:
+            # Step 1: Create subscription
+            create_data = {
+                "email": test_email,
+                "name": test_name,
+                "planId": "all_tools_access"
+            }
+            
+            create_response = self.session.post(f"{self.base_url}/subscription/create", json=create_data, timeout=10)
+            create_success = create_response.status_code == 200
+            details = f"Create Status: {create_response.status_code}"
+            
+            if not create_success:
+                details += f", Error: {create_response.text[:100]}"
+                self.log_result("Subscription Create", create_success, details)
+                return False
+            
+            create_data_response = create_response.json()
+            subscription_id = create_data_response.get('subscriptionId')
+            details += f", Subscription ID: {subscription_id[:8]}..." if subscription_id else ", No subscription ID"
+            
+            # Step 2: Activate subscription
+            activate_data = {"subscriptionId": subscription_id}
+            activate_response = self.session.post(f"{self.base_url}/subscription/activate", json=activate_data, timeout=10)
+            activate_success = activate_response.status_code == 200
+            details += f", Activate Status: {activate_response.status_code}"
+            
+            if not activate_success:
+                details += f", Activate Error: {activate_response.text[:100]}"
+                self.log_result("Subscription Flow", False, details)
+                return False
+            
+            # Step 3: Check status
+            status_response = self.session.get(f"{self.base_url}/subscription/status", params={"email": test_email}, timeout=10)
+            status_success = status_response.status_code == 200
+            details += f", Status Check: {status_response.status_code}"
+            
+            if status_success:
+                status_data = status_response.json()
+                has_subscription = status_data.get('hasSubscription', False)
+                status_active = status_data.get('status') == 'active'
+                details += f", Has Subscription: {has_subscription}, Status Active: {status_active}"
+                success = create_success and activate_success and status_success and has_subscription and status_active
+            else:
+                details += f", Status Error: {status_response.text[:100]}"
+                success = False
+            
+            self.log_result("Subscription Flow", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_result("Subscription Flow", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_subscription_status_existing(self):
+        """Test subscription status for existing user"""
+        try:
+            response = self.session.get(f"{self.base_url}/subscription/status", params={"email": "test@example.com"}, timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                has_subscription = data.get('hasSubscription', False)
+                status = data.get('status', 'unknown')
+                details += f", Has Subscription: {has_subscription}, Status: {status}"
+                # For existing user, we expect active subscription
+                success = has_subscription and status == 'active'
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Subscription Status (Existing)", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Subscription Status (Existing)", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_subscription_access_check(self):
+        """Test subscription access check for premium tools"""
+        try:
+            access_data = {
+                "email": "test@example.com",
+                "serviceId": "pdf_ocr"
+            }
+            
+            response = self.session.post(f"{self.base_url}/subscription/check-access", json=access_data, timeout=10)
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if success:
+                data = response.json()
+                has_access = data.get('hasAccess', False)
+                details += f", Has Access: {has_access}"
+                # Should return hasAccess: true for subscribed user
+                success = has_access
+            else:
+                details += f", Error: {response.text[:100]}"
+            self.log_result("Subscription Access Check", success, details)
+            return success
+        except Exception as e:
+            self.log_result("Subscription Access Check", False, f"Exception: {str(e)}")
+            return False
+    
     def test_paypal_endpoints(self, order_id):
         """Test PayPal integration endpoints (creation only, not capture)"""
         if not order_id:
