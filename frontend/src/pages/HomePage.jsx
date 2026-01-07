@@ -156,7 +156,9 @@ const HomePage = () => {
             alt="FileSolved - Document Solutions" 
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60" />
+          {/* Strong overlay to hide any text in background image */}
+          <div className="absolute inset-0 bg-slate-900/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900/80" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
@@ -169,15 +171,15 @@ const HomePage = () => {
               FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <Link to="/case-file/new" data-testid="hero-start-case">
+              <Link to="/services" data-testid="hero-start-case">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 w-full sm:w-auto rounded-xl shadow-lg shadow-blue-600/30">
-                  Start a Case File
+                  Browse Tools
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/services" data-testid="hero-browse-tools">
+              <Link to="/pricing" data-testid="hero-browse-tools">
                 <Button variant="outline" className="text-lg px-8 py-6 w-full sm:w-auto rounded-xl border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50">
-                  Browse Tools & Bundles
+                  Upgrade for $5.99/mo
                 </Button>
               </Link>
             </div>
