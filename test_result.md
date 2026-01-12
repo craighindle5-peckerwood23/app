@@ -187,15 +187,18 @@ backend:
 
   - task: "PayPal API - POST /api/paypal/create-order"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/paypal.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "PayPal integration implemented but PAYPAL_SECRET not configured"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - POST /api/paypal/create-order returns 200 with PayPal order ID. PayPal credentials are configured and working. Creates PayPal orders successfully."
 
   - task: "PayPal API - POST /api/paypal/capture-order"
     implemented: true
