@@ -190,6 +190,13 @@ export const Layout = ({ children, title, description, schema }) => {
                   FAQ
                 </Link>
                 <Link
+                  to="/pricing"
+                  className="block py-2 px-2 text-blue-600 font-medium hover:text-blue-700 hover:bg-blue-50 rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Pricing - $5.99/mo
+                </Link>
+                <Link
                   to="/contact"
                   className="block py-2 px-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
@@ -199,12 +206,12 @@ export const Layout = ({ children, title, description, schema }) => {
               </div>
 
               <Link
-                to="/case-file/new"
+                to="/services"
                 className="block mt-4"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full rounded-lg">
-                  Start a Case File
+                  Browse Tools
                 </Button>
               </Link>
             </div>
