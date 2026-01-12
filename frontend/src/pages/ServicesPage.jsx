@@ -442,52 +442,114 @@ const ServicesPage = () => {
   );
 };
 
-// Service Card Component
+// Service Card Component - Enhanced with "Pairs well with" and CTAs
 const ServiceCard = ({ service, detailed = false }) => {
   const IconComponent = getIcon(service.icon);
   const isBundle = service.type === 'bundle';
   const isGrievance = service.type === 'grievance';
   const isLegal = service.type === 'legal' || service.type === 'notary';
+  
+  // Get pairs well with data
+  const pairs = pairsWellWith[service.id] || [];
+  const shortDesc = shortDescriptions[service.id] || service.description?.slice(0, 60) + '...';
 
   return (
-    <Link 
-      to={`/services/${service.id}`}
-      className={`card-base p-5 card-hover group ${detailed ? 'p-6' : ''}`}
+    <div 
+      className={`card-base p-5 flex flex-col ${detailed ? 'p-6' : ''}`}
       data-testid={`service-card-${service.id}`}
     >
-      <div className="flex items-start gap-4">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-          isBundle ? 'bg-yellow-100 group-hover:bg-yellow-200' :
-          isGrievance ? 'bg-red-100 group-hover:bg-red-200' :
-          isLegal ? 'bg-purple-100 group-hover:bg-purple-200' :
-          'bg-slate-100 group-hover:bg-blue-100'
+      {/* Header with icon and title */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          isBundle ? 'bg-yellow-100' :
+          isGrievance ? 'bg-red-100' :
+          isLegal ? 'bg-purple-100' :
+          'bg-blue-100'
         }`}>
           <IconComponent className={`w-5 h-5 ${
             isBundle ? 'text-yellow-600' :
             isGrievance ? 'text-red-600' :
             isLegal ? 'text-purple-600' :
-            'text-slate-600 group-hover:text-blue-600'
+            'text-blue-600'
           }`} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-slate-900 truncate">{service.name}</h3>
-            {isBundle && <Badge className="bg-yellow-100 text-yellow-800 flex-shrink-0">Bundle</Badge>}
-            {isGrievance && <Badge className="bg-red-100 text-red-800 flex-shrink-0">Legal</Badge>}
+            <h3 className="font-semibold text-slate-900 leading-tight">{service.name}</h3>
+            {isBundle && <Badge className="bg-yellow-100 text-yellow-800 text-xs flex-shrink-0">Bundle</Badge>}
           </div>
-          {detailed && (
-            <p className="text-sm text-slate-500 mt-1 line-clamp-2">{service.description}</p>
-          )}
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-blue-600 font-semibold">{getPriceDisplay(service)}</span>
-            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-          </div>
-          {detailed && service.estimated_time && (
-            <p className="text-xs text-slate-400 mt-2">Est. time: {service.estimated_time}</p>
-          )}
         </div>
       </div>
-    </Link>
+      
+      {/* Short description (10-12 words) */}
+      <p className="text-sm text-slate-600 mb-3 leading-relaxed line-clamp-2">
+        {shortDesc}
+      </p>
+      
+      {/* Pairs well with row */}
+      {pairs.length > 0 && (
+        <div className="mb-4 pb-3 border-b border-slate-100">
+          <p className="text-xs text-slate-500">
+            <span className="font-medium text-slate-600">Pairs well with:</span>{" "}
+            {pairs.slice(0, 3).map((pairId, idx) => (
+              <span key={pairId}>
+                <Link 
+                  to={`/services/${pairId}`}
+                  className="text-blue-600 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {getServiceNameById(pairId)}
+                </Link>
+                {idx < Math.min(pairs.length, 3) - 1 && "; "}
+              </span>
+            ))}
+          </p>
+        </div>
+      )}
+      
+      {/* Price row */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-lg font-bold text-blue-600">{getPriceDisplay(service)}</span>
+        {service.estimated_time && (
+          <span className="text-xs text-slate-400">~{service.estimated_time}</span>
+        )}
+      </div>
+      
+      {/* CTA Buttons Row */}
+      <div className="flex gap-2 mt-auto">
+        <Link to={`/upload?service=${service.id}`} className="flex-1">
+          <Button 
+            size="sm" 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"
+          >
+            <Play className="w-3 h-3 mr-1" />
+            Start Now
+          </Button>
+        </Link>
+        <Link to={`/services/${service.id}`} className="flex-1">
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="w-full text-xs border-slate-200"
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Open Tool
+          </Button>
+        </Link>
+        {(isLegal || isGrievance || service.type === 'career' || service.type === 'business') && (
+          <Link to={`/upload?service=${service.id}&generate=true`} className="flex-1">
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="w-full text-xs border-green-200 text-green-700 hover:bg-green-50"
+            >
+              <FileDown className="w-3 h-3 mr-1" />
+              Generate
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
   );
 };
 
