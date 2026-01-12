@@ -6,6 +6,7 @@ import { Toaster } from "./components/ui/sonner";
 // Pages
 import HomePage from "./pages/HomePage";
 import ServicesPage from "./pages/ServicesPage";
+import ServiceDetailPage from "./pages/ServiceDetailPage";
 import UploadPage from "./pages/UploadPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
