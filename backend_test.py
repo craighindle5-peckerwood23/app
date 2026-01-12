@@ -536,8 +536,8 @@ class FileSolvedAPITester:
         if upload_ok and file_data:
             order_ok, order_data = self.test_order_creation(file_data)
             if order_ok and order_data:
-                self.test_order_retrieval(order_data.get('order_id'))
-                self.test_paypal_endpoints(order_data.get('order_id'))
+                self.test_order_retrieval(order_data.get('orderId'))  # Changed from order_id to orderId
+                self.test_paypal_endpoints(order_data.get('orderId'))  # Changed from order_id to orderId
         
         # Admin functionality tests
         admin_login_ok = self.test_admin_login()
