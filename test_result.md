@@ -419,16 +419,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Services API - GET /api/services"
-    - "Services API - GET /api/services/:id"
-    - "Upload API - POST /api/upload"
-    - "Orders API - POST /api/orders"
-    - "Orders API - GET /api/orders/:id"
-    - "Admin API - POST /api/admin/login"
-    - "User API - POST /api/user/register"
-    - "User API - POST /api/user/login"
     - "Services page loads"
     - "Upload page"
+    - "Checkout page"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
