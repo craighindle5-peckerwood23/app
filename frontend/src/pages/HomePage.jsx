@@ -148,25 +148,25 @@ const HomePage = () => {
       schema={[homeSchema, organizationSchema]}
     >
       {/* SECTION 1 — HERO WITH IMAGE */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[600px]">
         {/* Background Image - Man at desk */}
         <div className="absolute inset-0 z-0">
           <img 
             src="/man-at-desk.png" 
             alt="FileSolved - Document Solutions" 
-            className="w-full h-full object-cover object-right"
+            className="w-full h-full object-cover object-right-top"
           />
-          {/* Gradient overlay - darker on left for text, lighter on right to show image */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/85 to-slate-900/40" />
+          {/* Dark overlay on left for text readability, fades to show man on right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/95 to-slate-900/70" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
+          <div className="max-w-xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight drop-shadow-lg">
               Turn your proof into power
               <span className="block text-blue-400">with FileSolved</span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-xl leading-relaxed">
+            <p className="mt-6 text-lg sm:text-xl text-slate-200 max-w-lg leading-relaxed drop-shadow-md">
               FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -182,7 +182,7 @@ const HomePage = () => {
                 </Button>
               </Link>
             </div>
-            <p className="mt-8 text-sm text-slate-400 flex items-center gap-2">
+            <p className="mt-8 text-sm text-slate-300 flex items-center gap-2 drop-shadow">
               <CheckCircle className="w-4 h-4 text-green-400" />
               No legal jargon. No gatekeeping. Just tools that help you stand up for yourself.
             </p>
