@@ -500,13 +500,13 @@ class FileSolvedAPITester:
             return False
             
         try:
-            form_data = {'order_id': order_id}
-            response = self.session.post(f"{self.base_url}/paypal/create-order", data=form_data, timeout=15)
+            form_data = {'orderId': order_id}  # Changed from order_id to orderId
+            response = self.session.post(f"{self.base_url}/paypal/create-order", json=form_data, timeout=15)  # Changed to json
             success = response.status_code == 200
             details = f"Status: {response.status_code}"
             if success:
                 data = response.json()
-                details += f", PayPal Order ID: {data.get('paypal_order_id', 'unknown')[:8]}..."
+                details += f", PayPal Order ID: {data.get('paypalOrderId', 'unknown')[:8]}..."  # Changed field name
             else:
                 details += f", Error: {response.text[:100]}"
             self.log_result("PayPal Order Creation", success, details)
