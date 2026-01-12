@@ -156,17 +156,17 @@ const HomePage = () => {
             alt="FileSolved - Document Solutions" 
             className="w-full h-full object-cover object-right-top"
           />
-          {/* Dark overlay on left for text readability, fades to show man on right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/95 to-slate-900/70" />
+          {/* Solid dark background on left half, gradient fade to show image on right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 from-40% via-slate-950/90 via-50% to-transparent to-100%" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="max-w-xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight drop-shadow-lg">
+          <div className="max-w-xl bg-slate-950/80 p-8 rounded-2xl backdrop-blur-sm">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
               Turn your proof into power
               <span className="block text-blue-400">with FileSolved</span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-slate-200 max-w-lg leading-relaxed drop-shadow-md">
+            <p className="mt-6 text-lg sm:text-xl text-slate-200 leading-relaxed">
               FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -182,7 +182,7 @@ const HomePage = () => {
                 </Button>
               </Link>
             </div>
-            <p className="mt-8 text-sm text-slate-300 flex items-center gap-2 drop-shadow">
+            <p className="mt-8 text-sm text-slate-300 flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-400" />
               No legal jargon. No gatekeeping. Just tools that help you stand up for yourself.
             </p>
