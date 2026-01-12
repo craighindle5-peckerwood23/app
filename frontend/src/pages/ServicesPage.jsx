@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { 
   FileText, FileOutput, Image, Images, ScanText, Scan, Printer, Trash2, 
   ArrowRight, Search, Loader2, Zap, Scale, Users, Shield, Briefcase,
-  Calculator, Building, Stamp, ClipboardList, Lock, Hash, PenLine
+  Calculator, Building, Stamp, ClipboardList, Lock, Hash, PenLine,
+  Play, ExternalLink, FileDown
 } from "lucide-react";
 import { useServices, useServiceTypes, getPriceDisplay, groupServicesByType } from "../hooks/useServices";
 
@@ -22,6 +23,203 @@ const iconMap = {
 
 const getIcon = (iconName) => {
   return iconMap[iconName] || FileText;
+};
+
+// "Pairs well with" mapping - complementary tools for each service
+const pairsWellWith = {
+  // PDF Conversion
+  pdf_to_word: ["pdf_merger", "document_summarizer", "pdf_ocr"],
+  pdf_to_excel: ["pdf_to_word", "document_summarizer", "invoice_generator"],
+  pdf_to_powerpoint: ["pdf_merger", "image_to_pdf", "powerpoint_to_pdf"],
+  pdf_to_text: ["document_summarizer", "pdf_ocr", "document_translation"],
+  word_to_pdf: ["pdf_merger", "pdf_esign", "grievance_letter_generator"],
+  excel_to_pdf: ["pdf_compressor", "invoice_generator", "pdf_merger"],
+  powerpoint_to_pdf: ["pdf_merger", "pdf_compressor", "image_to_pdf"],
+  image_to_pdf: ["pdf_merger", "image_enhancer", "document_scanner"],
+  
+  // PDF Tools
+  pdf_merger: ["pdf_splitter", "pdf_compressor", "pdf_page_reorder"],
+  pdf_splitter: ["pdf_merger", "pdf_page_extractor", "pdf_compressor"],
+  pdf_compressor: ["pdf_merger", "image_to_pdf", "email_attachment_prep"],
+  pdf_password_protection: ["pdf_redaction", "secure_shredding", "pdf_esign"],
+  pdf_unlocker: ["pdf_to_word", "pdf_merger", "pdf_form_filler"],
+  pdf_page_reorder: ["pdf_merger", "pdf_splitter", "pdf_page_extractor"],
+  pdf_page_extractor: ["pdf_merger", "pdf_splitter", "pdf_compressor"],
+  pdf_watermark: ["pdf_esign", "pdf_password_protection", "pdf_merger"],
+  pdf_esign: ["pdf_form_filler", "grievance_letter_generator", "contract_template_builder"],
+  pdf_form_filler: ["pdf_esign", "legal_form_generator", "pdf_to_word"],
+  pdf_redaction: ["pdf_password_protection", "secure_shredding", "pdf_to_word"],
+  
+  // OCR & Scanning
+  pdf_ocr: ["pdf_to_word", "document_summarizer", "document_scanner"],
+  document_scanner: ["pdf_merger", "image_to_pdf", "pdf_ocr"],
+  bulk_document_scanner: ["pdf_merger", "document_classifier", "document_tagging"],
+  image_ocr: ["pdf_ocr", "document_scanner", "handwriting_ocr"],
+  handwriting_ocr: ["image_ocr", "document_scanner", "pdf_ocr"],
+  
+  // Fax
+  fax_sending: ["pdf_merger", "word_to_pdf", "grievance_letter_generator"],
+  fax_receiving: ["pdf_to_word", "document_scanner", "fax_to_email"],
+  fax_to_email: ["fax_receiving", "pdf_merger", "document_scanner"],
+  
+  // Security
+  secure_shredding: ["pdf_redaction", "bulk_shredding", "pdf_password_protection"],
+  bulk_shredding: ["secure_shredding", "zip_creator", "pdf_merger"],
+  
+  // AI Document Tools
+  document_translation: ["document_summarizer", "pdf_to_word", "pdf_ocr"],
+  document_summarizer: ["document_translation", "pdf_to_text", "audio_transcription"],
+  document_classifier: ["document_tagging", "bulk_document_scanner", "pdf_merger"],
+  document_tagging: ["document_classifier", "pdf_merger", "document_summarizer"],
+  document_comparison: ["pdf_to_word", "document_summarizer", "pdf_redaction"],
+  
+  // Image Tools
+  image_enhancer: ["image_to_pdf", "image_upscaler", "document_scanner"],
+  image_background_remover: ["image_enhancer", "image_to_pdf", "image_upscaler"],
+  image_upscaler: ["image_enhancer", "image_to_pdf", "image_background_remover"],
+  
+  // Utilities
+  file_converter: ["pdf_merger", "zip_creator", "image_to_pdf"],
+  zip_extractor: ["zip_creator", "file_converter", "pdf_merger"],
+  zip_creator: ["zip_extractor", "pdf_merger", "bulk_shredding"],
+  
+  // Transcription
+  audio_transcription: ["document_summarizer", "video_transcription", "voice_recorder"],
+  video_transcription: ["audio_transcription", "document_summarizer", "voice_recorder"],
+  voice_recorder: ["audio_transcription", "pdf_merger", "document_scanner"],
+  
+  // Legal
+  notarization_prep: ["pdf_esign", "legal_form_generator", "pdf_form_filler"],
+  legal_form_generator: ["grievance_letter_generator", "contract_template_builder", "pdf_esign"],
+  grievance_letter_generator: ["legal_form_generator", "pdf_merger", "fax_sending"],
+  emergency_document_bundle: ["pdf_merger", "document_scanner", "pdf_esign"],
+  contract_template_builder: ["legal_form_generator", "pdf_esign", "pdf_form_filler"],
+  
+  // Career
+  resume_builder: ["cover_letter_generator", "pdf_to_word", "word_to_pdf"],
+  cover_letter_generator: ["resume_builder", "word_to_pdf", "business_letter_generator"],
+  
+  // Business
+  invoice_generator: ["receipt_maker", "pdf_esign", "pdf_merger"],
+  receipt_maker: ["invoice_generator", "word_to_pdf", "pdf_merger"],
+  business_letter_generator: ["cover_letter_generator", "grievance_letter_generator", "word_to_pdf"]
+};
+
+// Short descriptions (10-12 words)
+const shortDescriptions = {
+  pdf_to_word: "Convert any PDF into an editable Word document with OCR.",
+  pdf_to_excel: "Extract tables and data from PDFs into Excel spreadsheets.",
+  pdf_to_powerpoint: "Transform PDF files into editable PowerPoint presentations instantly.",
+  pdf_to_text: "Pull clean, searchable text from any PDF document.",
+  word_to_pdf: "Convert Word documents into secure, shareable PDF files.",
+  excel_to_pdf: "Export spreadsheets into polished, print-ready PDF documents.",
+  powerpoint_to_pdf: "Turn presentations into high-quality PDFs for easy sharing.",
+  image_to_pdf: "Combine multiple images into a single organized PDF file.",
+  pdf_merger: "Merge multiple PDFs into one organized, unified document.",
+  pdf_splitter: "Split large PDFs into smaller, more manageable files.",
+  pdf_compressor: "Reduce PDF file size while maintaining document clarity.",
+  pdf_password_protection: "Add encryption and password security to sensitive PDFs.",
+  pdf_unlocker: "Remove passwords from PDFs you own or have permission.",
+  pdf_page_reorder: "Rearrange, rotate, or delete PDF pages with precision.",
+  pdf_page_extractor: "Extract specific pages from a PDF into new file.",
+  pdf_watermark: "Add text or image watermarks to protect your PDFs.",
+  pdf_esign: "Sign PDFs digitally with legally compliant electronic signatures.",
+  pdf_form_filler: "Fill out interactive PDF forms online quickly and easily.",
+  pdf_redaction: "Permanently remove sensitive text or data from PDF documents.",
+  pdf_ocr: "Convert scanned PDFs into searchable, editable text documents.",
+  document_scanner: "Scan documents using your device camera with auto-crop.",
+  bulk_document_scanner: "Scan and process large batches of documents at once.",
+  image_ocr: "Extract text from images using advanced character recognition.",
+  handwriting_ocr: "Convert handwritten notes into digital, editable text files.",
+  fax_sending: "Send secure, encrypted faxes directly from your browser.",
+  fax_receiving: "Receive faxes online with instant email notifications.",
+  fax_to_email: "Automatically forward incoming faxes to your email inbox.",
+  secure_shredding: "Permanently destroy digital files with military-grade security.",
+  bulk_shredding: "Securely delete large batches of files in one action.",
+  document_translation: "Translate documents into 100+ languages with formatting preserved.",
+  document_summarizer: "Generate concise AI-powered summaries of long documents.",
+  document_classifier: "Automatically categorize documents into predefined types instantly.",
+  document_tagging: "Add smart metadata tags for easy document organization.",
+  document_comparison: "Compare two documents and highlight all the differences.",
+  image_enhancer: "Improve clarity, brightness, and readability of scanned images.",
+  image_background_remover: "Remove backgrounds from images automatically using AI.",
+  image_upscaler: "Increase image resolution using AI super-resolution technology.",
+  file_converter: "Convert between dozens of file formats instantly online.",
+  zip_extractor: "Extract ZIP, RAR, and 7z archives online instantly.",
+  zip_creator: "Compress files into ZIP archives for easy sharing.",
+  audio_transcription: "Convert audio recordings into accurate text transcripts.",
+  video_transcription: "Extract spoken content from videos into text documents.",
+  voice_recorder: "Record audio directly in your browser and save securely.",
+  notarization_prep: "Prepare documents for online notarization with guided steps.",
+  legal_form_generator: "Generate common legal forms with AI-powered assistance.",
+  grievance_letter_generator: "Create structured, professional grievance letters automatically.",
+  emergency_document_bundle: "Generate a complete emergency-ready document pack instantly.",
+  resume_builder: "Create polished, ATS-optimized resumes with AI assistance.",
+  cover_letter_generator: "Produce tailored cover letters for any job application.",
+  invoice_generator: "Create professional invoices with automatic calculations included.",
+  receipt_maker: "Generate clean, printable receipts for business use.",
+  business_letter_generator: "Produce formal business letters with correct formatting.",
+  contract_template_builder: "Generate customizable contract templates for common agreements."
+};
+
+// Get service name by ID
+const getServiceNameById = (id) => {
+  const names = {
+    pdf_to_word: "PDF to Word",
+    pdf_to_excel: "PDF to Excel", 
+    pdf_to_powerpoint: "PDF to PowerPoint",
+    pdf_to_text: "PDF to Text",
+    word_to_pdf: "Word to PDF",
+    excel_to_pdf: "Excel to PDF",
+    powerpoint_to_pdf: "PowerPoint to PDF",
+    image_to_pdf: "Image to PDF",
+    pdf_merger: "PDF Merger",
+    pdf_splitter: "PDF Splitter",
+    pdf_compressor: "PDF Compressor",
+    pdf_password_protection: "PDF Protection",
+    pdf_unlocker: "PDF Unlocker",
+    pdf_page_reorder: "Page Reorder",
+    pdf_page_extractor: "Page Extractor",
+    pdf_watermark: "Watermark Tool",
+    pdf_esign: "eSign Tool",
+    pdf_form_filler: "Form Filler",
+    pdf_redaction: "Redaction Tool",
+    pdf_ocr: "PDF OCR",
+    document_scanner: "Doc Scanner",
+    bulk_document_scanner: "Bulk Scanner",
+    image_ocr: "Image OCR",
+    handwriting_ocr: "Handwriting OCR",
+    fax_sending: "Send Fax",
+    fax_receiving: "Receive Fax",
+    fax_to_email: "Fax to Email",
+    secure_shredding: "Secure Shred",
+    bulk_shredding: "Bulk Shred",
+    document_translation: "Translation",
+    document_summarizer: "Summarizer",
+    document_classifier: "Classifier",
+    document_tagging: "Auto Tagging",
+    document_comparison: "Doc Compare",
+    image_enhancer: "Image Enhance",
+    image_background_remover: "BG Remover",
+    image_upscaler: "Upscaler",
+    file_converter: "File Converter",
+    zip_extractor: "ZIP Extract",
+    zip_creator: "ZIP Creator",
+    audio_transcription: "Audio to Text",
+    video_transcription: "Video to Text",
+    voice_recorder: "Voice Recorder",
+    notarization_prep: "Notary Prep",
+    legal_form_generator: "Legal Forms",
+    grievance_letter_generator: "Grievance Letter",
+    emergency_document_bundle: "Emergency Bundle",
+    resume_builder: "Resume Builder",
+    cover_letter_generator: "Cover Letter",
+    invoice_generator: "Invoice Maker",
+    receipt_maker: "Receipt Maker",
+    business_letter_generator: "Business Letter",
+    contract_template_builder: "Contract Builder"
+  };
+  return names[id] || id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
 const ServicesPage = () => {
