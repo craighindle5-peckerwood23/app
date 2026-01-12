@@ -232,15 +232,18 @@ backend:
 
   - task: "Admin API - GET /api/admin/analytics"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/admin.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Analytics dashboard endpoint"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - GET /api/admin/analytics returns 200 with analytics data including revenue and order counts. Admin analytics working correctly with JWT authentication."
 
   - task: "User API - POST /api/user/register"
     implemented: true
