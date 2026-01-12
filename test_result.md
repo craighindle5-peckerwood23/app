@@ -271,15 +271,18 @@ backend:
 
   - task: "Processing API - POST /api/process/:orderId"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/src/routes/process.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "File processing trigger"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - POST /api/process/:orderId returns 400 'Order must be paid before processing' for unpaid orders. Endpoint working correctly with proper validation."
 
   - task: "AI API - POST /api/ai/summarize"
     implemented: true
