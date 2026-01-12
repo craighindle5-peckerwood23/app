@@ -140,11 +140,14 @@ backend:
     file: "/app/backend/src/routes/services.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Returns single service by ID with price conversion"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED - GET /api/services/:id returns 200 with service details. Tested pdf_to_word, pdf_to_excel, pdf_to_powerpoint - all working correctly."
 
   - task: "Orders API - POST /api/orders"
     implemented: true
