@@ -154,20 +154,19 @@ const HomePage = () => {
           <img 
             src="/man-at-desk.png" 
             alt="FileSolved - Document Solutions" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-right"
           />
-          {/* Strong overlay to hide any text in background image */}
-          <div className="absolute inset-0 bg-slate-900/90" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900/80" />
+          {/* Gradient overlay - darker on left for text, lighter on right to show image */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/85 to-slate-900/40" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="max-w-3xl">
+          <div className="max-w-2xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
               Turn your proof into power
               <span className="block text-blue-400">with FileSolved</span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
+            <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-xl leading-relaxed">
               FileSolved helps you document abuse, negligence, misconduct, and broken promises—then turn that evidence into clear, actionable reports, letters, and bundles you can actually use.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
