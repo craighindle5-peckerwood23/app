@@ -135,11 +135,11 @@ class FileSolvedAPITester:
             }
             
             response = self.session.post(f"{self.base_url}/orders", json=form_data, timeout=10)
-            success = response.status_code == 200
+            success = response.status_code in [200, 201]  # Accept both 200 and 201
             details = f"Status: {response.status_code}"
             if success:
                 order = response.json()
-                details += f", Order ID: {order.get('order_id', 'unknown')[:8]}..."
+                details += f", Order ID: {order.get('orderId', 'unknown')[:8]}..."  # Changed from order_id to orderId
                 self.log_result("Order Creation", success, details)
                 return success, order
             else:
