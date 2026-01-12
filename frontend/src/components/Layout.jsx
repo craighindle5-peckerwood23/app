@@ -117,15 +117,22 @@ export const Layout = ({ children, title, description, schema }) => {
                 FAQ
               </Link>
               <Link
+                to="/pricing"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                data-testid="nav-pricing"
+              >
+                Pricing
+              </Link>
+              <Link
                 to="/contact"
                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                 data-testid="nav-contact"
               >
                 Contact
               </Link>
-              <Link to="/case-file/new" data-testid="nav-get-started">
+              <Link to="/services" data-testid="nav-get-started">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                  Start a Case File
+                  Browse Tools
                 </Button>
               </Link>
             </div>
