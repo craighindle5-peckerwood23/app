@@ -37,26 +37,16 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const adminName = localStorage.getItem("adminName") || "Admin";
 
-  useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      navigate("/admin");
-      return;
-    }
-    fetchData();
-  }, [page, statusFilter]);
-
-  const getAuthHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("adminToken")}`
-  });
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem("adminToken");
+      const authHeaders = { Authorization: `Bearer ${token}` };
+      
       const requests = [
-        axios.get(`${API}/admin/analytics`, { headers: getAuthHeaders() }),
+        axios.get(`${API}/admin/analytics`, { headers: authHeaders }),
         axios.get(`${API}/admin/orders`, { 
-          headers: getAuthHeaders(),
+          headers: authHeaders,
           params: { 
             skip: page * 10, 
             limit: 10,
@@ -64,7 +54,7 @@ const AdminDashboard = () => {
           }
         }),
         axios.get(`${API}/admin/revenue-summary`, { 
-          headers: getAuthHeaders(),
+          headers: authHeaders,
           params: { days: 30 }
         })
       ];
@@ -94,7 +84,16 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, navigate]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      navigate("/admin");
+      return;
+    }
+    fetchData();
+  }, [fetchData, navigate]);
 
   const fetchErrors = useCallback(async () => {
     try {
