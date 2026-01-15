@@ -325,11 +325,13 @@ router.get('/users', authenticateAdmin, async (req, res) => {
 router.get('/errors', authenticateAdmin, async (req, res) => {
   try {
     const failedOrders = await Order.find({ status: 'failed' })
+      .select('orderId serviceName errorMessage createdAt customerEmail')
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
 
     const failedJobs = await Job.find({ status: 'failed' })
+      .select('jobId orderId type errorMessage createdAt')
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -361,10 +363,10 @@ router.get('/export', authenticateAdmin, async (req, res) => {
 
     if (type === 'orders') {
       headers = ['orderId', 'serviceName', 'customerEmail', 'customerName', 'amount', 'status', 'createdAt'];
-      data = await Order.find(query).lean();
+      data = await Order.find(query).select(headers.join(' ')).limit(10000).lean();
     } else if (type === 'payments') {
       headers = ['paymentId', 'orderId', 'amount', 'status', 'provider', 'createdAt'];
-      data = await Payment.find(query).lean();
+      data = await Payment.find(query).select(headers.join(' ')).limit(10000).lean();
     }
 
     // Generate CSV
