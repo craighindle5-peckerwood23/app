@@ -2,32 +2,68 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Layout from "../components/Layout";
-import { Check, ArrowRight, FileText, Settings } from "lucide-react";
+import { Check, ArrowRight, FileText, Settings, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import axios from "axios";
+import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SubscriptionSuccessPage = () => {
   const [searchParams] = useSearchParams();
+  const subscriptionId = searchParams.get('subscription_id');
+  const baToken = searchParams.get('ba_token');
+  const token = searchParams.get('token');
   const email = searchParams.get('email');
+  
   const [subscription, setSubscription] = useState(null);
+  const [activating, setActivating] = useState(false);
+  const [activated, setActivated] = useState(false);
 
   useEffect(() => {
-    const fetchStatus = async () => {
-      if (email) {
+    const activateAndFetch = async () => {
+      // If returning from PayPal with subscription_id, activate it
+      if (subscriptionId && !activated) {
+        setActivating(true);
+        try {
+          const activateResponse = await axios.post(`${API}/subscription/activate`, {
+            paypalSubscriptionId: subscriptionId
+          });
+          
+          if (activateResponse.data.success) {
+            setActivated(true);
+            setSubscription({
+              hasSubscription: true,
+              status: 'active',
+              plan: activateResponse.data.subscription,
+              currentPeriodEnd: activateResponse.data.subscription?.currentPeriodEnd
+            });
+            toast.success('Subscription activated successfully!');
+          }
+        } catch (error) {
+          console.error('Activation error:', error);
+          toast.error('Failed to activate subscription. Please contact support.');
+        } finally {
+          setActivating(false);
+        }
+      } else if (email) {
+        // Fallback: fetch by email
         try {
           const response = await axios.get(`${API}/subscription/status`, {
             params: { email }
           });
           setSubscription(response.data);
+          if (response.data.hasSubscription) {
+            setActivated(true);
+          }
         } catch (error) {
           console.error('Fetch status error:', error);
         }
       }
     };
-    fetchStatus();
-  }, [email]);
+    
+    activateAndFetch();
+  }, [subscriptionId, email, activated]);
 
   return (
     <Layout>

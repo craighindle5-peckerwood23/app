@@ -45,22 +45,22 @@ const PricingPage = () => {
 
     setLoading(true);
     try {
-      // Create subscription
+      // Create subscription with PayPal
       const createResponse = await axios.post(`${API}/subscription/create`, {
         email,
         name,
         planId: 'all_tools_access'
       });
 
-      const { subscriptionId } = createResponse.data;
+      const { approvalUrl, subscriptionId } = createResponse.data;
 
-      // For demo, activate immediately (in production, this would go through PayPal)
-      await axios.post(`${API}/subscription/activate`, {
-        subscriptionId
-      });
-
-      toast.success('Subscription activated! Welcome to All Tools Access.');
-      navigate(`/subscription/success?email=${encodeURIComponent(email)}`);
+      if (approvalUrl) {
+        // Redirect to PayPal for approval
+        toast.success('Redirecting to PayPal...');
+        window.location.href = approvalUrl;
+      } else {
+        toast.error('Failed to get PayPal approval URL. Please try again.');
+      }
     } catch (error) {
       console.error('Subscribe error:', error);
       toast.error(error.response?.data?.error || 'Failed to create subscription');
