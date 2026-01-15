@@ -95,9 +95,16 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData, navigate]);
 
+  const getAuthHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("adminToken")}`
+  });
+
   const fetchErrors = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/admin/errors`, { headers: getAuthHeaders() });
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.get(`${API}/admin/errors`, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setErrors(response.data);
     } catch (error) {
       console.error("Errors fetch error:", error);
@@ -106,7 +113,10 @@ const AdminDashboard = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/admin/users`, { headers: getAuthHeaders() });
+      const token = localStorage.getItem("adminToken");
+      const response = await axios.get(`${API}/admin/users`, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setUsers(response.data.users || []);
     } catch (error) {
       console.error("Users fetch error:", error);
