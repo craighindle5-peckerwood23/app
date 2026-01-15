@@ -1,75 +1,81 @@
 # FileSolved - Product Requirements Document
 
 ## Original Problem Statement
-Build FileSolved - "One Upload. Problem Solved." A fully automated document-services platform with 50+ services, bundles, and grievance/legal document support.
+Build FileSolved - "One Upload. Problem Solved." A fully automated document-services platform with 50+ services, bundles, and grievance/legal document support. Rebranded as a "public empowerment platform" for documenting disputes and generating reports.
 
 ## Architecture
-- **Frontend**: React 19 + React Router + Tailwind CSS + Shadcn UI
-- **Backend**: FastAPI (Python) with catalog-driven services
+- **Frontend**: React + React Router + Tailwind CSS + Shadcn UI
+- **Backend**: Node.js/Express.js with catalog-driven services
 - **Database**: MongoDB
-- **Payments**: PayPal REST API v2 (Live mode)
-- **Email**: Resend (configured, awaiting API key)
+- **Payments**: PayPal REST API v2 (Live mode) - Single payments + Recurring subscriptions
+- **Email**: Resend (configured)
+- **AI**: Emergent LLM Key (GPT-4o) via Python microservice
 
-## Services Catalog (58 Services)
-**Types:**
-- Document Conversion (15 services)
-- OCR & Text Extraction (7 services)
-- Fax Services (4 services)
-- Secure Shredding (3 services)
-- Service Bundles (5 bundles)
-- Grievance & Complaints (3 services)
-- Notary Services (3 services)
-- Legal Documents (5 services)
-- Medical Documents (3 services)
-- Financial Documents (3 services)
-
-## Catalog-Driven Architecture
-- Single source of truth: `/app/backend/services_catalog.py` + `/app/frontend/src/data/servicesCatalog.ts`
-- API Endpoints:
-  - `GET /api/services` - List all services (with filtering by type, tag, search)
-  - `GET /api/services/types` - Get service type labels
-  - `GET /api/services/{id}` - Get single service (with included_services for bundles)
-  - `POST /api/orders/create` - Create order with serviceId, quantity, extraFields
-
-## Special Service Handling
-1. **Bundles**: Show included services, flat pricing
-2. **Grievance/Legal**: Collect extra fields (incident_date, authority_to_submit, summary)
-3. **Fax**: Collect fax_number, country_code
-4. **Medical/Notary**: Collect required fields per service type
+## Live URLs
+- **Preview**: https://empowerhelp.preview.emergentagent.com
+- **Pricing**: https://empowerhelp.preview.emergentagent.com/pricing
+- **Services**: https://empowerhelp.preview.emergentagent.com/services
 
 ## What's Been Implemented (January 2025)
 
-### Backend ✅
-- 58 services in catalog with pricing, types, tags
-- Dynamic service loading and filtering
-- Price calculation based on unit (per_file, per_page, flat)
-- Extra field validation for special services
-- Bundle service resolution (included_services populated)
+### PayPal Recurring Subscriptions ✅
+- Full PayPal Subscriptions API integration
+- $5.99/month "All Tools Access" plan
+- Auto-creates PayPal product and billing plan
+- Redirects user to PayPal for approval
+- Activates subscription on return
+- Webhook handlers for BILLING.SUBSCRIPTION.* events
+- Cancel subscription functionality
 
-### Frontend ✅
-- Dynamic services page with category tabs
-- Search functionality
-- Service detail pages with:
-  - Bundle includes display
-  - Extra fields form for grievance/legal
-  - Quantity input for per-page/per-file services
+### Core Features ✅
+- 53+ document services with dynamic pricing
+- File upload and order processing
+- Single-payment checkout via PayPal
+- AI Assistant (GPT-4o powered)
+- Admin Dashboard with analytics (Recharts)
 - Responsive design with professional styling
 
-## Prioritized Backlog
+### Frontend Pages ✅
+- Homepage with hero section
+- Services catalog with category tabs
+- Individual service detail pages
+- Pricing page with subscription form
+- Subscription success page
+- Admin dashboard
+- FAQ page
+- Contact page
 
-### P0 - Critical
-- [ ] Add PAYPAL_SECRET to .env
-- [ ] Add RESEND_API_KEY to .env
+### Backend APIs ✅
+- `/api/services` - Service catalog
+- `/api/orders` - Order management
+- `/api/payments` - PayPal single payments
+- `/api/subscription/*` - Recurring subscriptions
+- `/api/ai/chat` - AI assistant
+- `/api/admin/*` - Admin endpoints
 
-### P1 - High Priority
-- [ ] User authentication system
-- [ ] File processors for new service types
+## Credentials (in /app/backend/.env)
+- PayPal: Live mode credentials configured
+- Resend: API key configured
+- Emergent LLM Key: Configured for GPT-4o
+- JWT: Secret configured
 
-### P2 - Medium Priority
-- [ ] AI-powered services (summarization, classification)
-- [ ] 50+ SEO how-to pages
+## Pending Items (P1)
 
-## Next Tasks
-1. Provide credentials (PAYPAL_SECRET, RESEND_API_KEY)
-2. Test end-to-end payment flow
-3. Implement file processors for additional service types
+### Content Enhancement
+- [ ] Add service-specific FAQs
+- [ ] Add customer testimonials
+- [ ] Implement crawl indexing optimization
+
+### SEO & Marketing
+- [ ] Internal linking strategy
+- [ ] Dynamic bundle/category pages
+- [ ] Additional how-to pages
+
+## Future/Backlog (P2)
+- New service/tool ideas from innovation docs
+- Extended Admin Dashboard features
+- Profitability Engine
+- Bulk Processing features
+
+## Last Updated
+January 2025 - PayPal Recurring Subscriptions implemented
