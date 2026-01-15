@@ -1,4 +1,4 @@
-// src/routes/subscription.js - Subscription Management Routes
+// src/routes/subscription.js - PayPal Subscription Billing Integration
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
@@ -11,12 +11,14 @@ const PAYPAL_API = process.env.PAYPAL_MODE === 'live'
   ? 'https://api-m.paypal.com' 
   : 'https://api-m.sandbox.paypal.com';
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://filesolved-1.preview.emergentagent.com';
+
 // Plan configuration
 const PLAN_CONFIG = {
   all_tools_access: {
     id: 'all_tools_access',
     name: 'All Tools Access',
-    description: 'Unlimited access to all 50+ FileSolved tools',
+    description: 'Unlimited access to all 50+ FileSolved document tools',
     priceMonthly: 599, // $5.99
     currency: 'USD',
     features: [
@@ -52,7 +54,113 @@ const getPayPalAccessToken = async () => {
   });
   
   const data = await response.json();
+  if (!data.access_token) {
+    console.error('PayPal token error:', data);
+    throw new Error('Failed to get PayPal access token');
+  }
   return data.access_token;
+};
+
+// Create or get PayPal product
+const getOrCreateProduct = async (accessToken) => {
+  // First, try to find existing product
+  const listResponse = await fetch(`${PAYPAL_API}/v1/catalogs/products?page_size=20`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  const products = await listResponse.json();
+  const existingProduct = products.products?.find(p => p.name === 'FileSolved All Tools Access');
+  
+  if (existingProduct) {
+    return existingProduct.id;
+  }
+  
+  // Create new product
+  const createResponse = await fetch(`${PAYPAL_API}/v1/catalogs/products`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'PayPal-Request-Id': `product-${uuidv4()}`
+    },
+    body: JSON.stringify({
+      name: 'FileSolved All Tools Access',
+      description: 'Unlimited access to all FileSolved document tools',
+      type: 'SERVICE',
+      category: 'SOFTWARE'
+    })
+  });
+  
+  const product = await createResponse.json();
+  console.log('Created PayPal product:', product.id);
+  return product.id;
+};
+
+// Create or get PayPal billing plan
+const getOrCreatePlan = async (accessToken, productId) => {
+  // Try to find existing plan
+  const listResponse = await fetch(`${PAYPAL_API}/v1/billing/plans?product_id=${productId}&page_size=20`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  const plans = await listResponse.json();
+  const activePlan = plans.plans?.find(p => p.status === 'ACTIVE' && p.name === 'All Tools Access Monthly');
+  
+  if (activePlan) {
+    return activePlan.id;
+  }
+  
+  // Create new plan
+  const createResponse = await fetch(`${PAYPAL_API}/v1/billing/plans`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'PayPal-Request-Id': `plan-${uuidv4()}`
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      name: 'All Tools Access Monthly',
+      description: 'Monthly subscription for unlimited access to all FileSolved tools',
+      status: 'ACTIVE',
+      billing_cycles: [
+        {
+          frequency: {
+            interval_unit: 'MONTH',
+            interval_count: 1
+          },
+          tenure_type: 'REGULAR',
+          sequence: 1,
+          total_cycles: 0, // Infinite
+          pricing_scheme: {
+            fixed_price: {
+              value: '5.99',
+              currency_code: 'USD'
+            }
+          }
+        }
+      ],
+      payment_preferences: {
+        auto_bill_outstanding: true,
+        setup_fee: {
+          value: '0',
+          currency_code: 'USD'
+        },
+        setup_fee_failure_action: 'CONTINUE',
+        payment_failure_threshold: 3
+      }
+    })
+  });
+  
+  const plan = await createResponse.json();
+  console.log('Created PayPal plan:', plan.id);
+  return plan.id;
 };
 
 // GET /api/subscription/plans - Get available subscription plans
@@ -73,7 +181,6 @@ router.get('/plans', (req, res) => {
 // GET /api/subscription/status - Check user's subscription status
 router.get('/status', optionalAuth, async (req, res) => {
   try {
-    // Check by user ID if logged in
     let subscription = null;
     
     if (req.user?.userId) {
@@ -83,7 +190,6 @@ router.get('/status', optionalAuth, async (req, res) => {
       }).lean();
     }
     
-    // Also check by email from query
     if (!subscription && req.query.email) {
       subscription = await Subscription.findOne({ 
         email: req.query.email.toLowerCase(),
@@ -98,6 +204,18 @@ router.get('/status', optionalAuth, async (req, res) => {
       });
     }
     
+    // Check if subscription is still valid
+    if (subscription.status === 'active' && subscription.currentPeriodEnd) {
+      if (new Date() > new Date(subscription.currentPeriodEnd)) {
+        // Subscription expired, update status
+        await Subscription.updateOne(
+          { subscriptionId: subscription.subscriptionId },
+          { status: 'expired' }
+        );
+        return res.json({ hasSubscription: false, plan: null, expired: true });
+      }
+    }
+    
     const plan = PLAN_CONFIG[subscription.planId] || PLAN_CONFIG.all_tools_access;
     
     res.json({
@@ -110,7 +228,8 @@ router.get('/status', optionalAuth, async (req, res) => {
       },
       currentPeriodEnd: subscription.currentPeriodEnd,
       nextBillingDate: subscription.nextBillingDate,
-      toolsUsedThisPeriod: subscription.toolsUsedThisPeriod
+      toolsUsedThisPeriod: subscription.toolsUsedThisPeriod,
+      paypalSubscriptionId: subscription.paypalSubscriptionId
     });
   } catch (error) {
     console.error('Subscription status error:', error);
@@ -121,7 +240,7 @@ router.get('/status', optionalAuth, async (req, res) => {
 // POST /api/subscription/create - Create PayPal subscription
 router.post('/create', async (req, res) => {
   try {
-    const { email, name, planId = 'all_tools_access', returnUrl, cancelUrl } = req.body;
+    const { email, name, planId = 'all_tools_access' } = req.body;
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -145,27 +264,53 @@ router.post('/create', async (req, res) => {
       });
     }
     
+    // Get PayPal access token
     const accessToken = await getPayPalAccessToken();
     
-    // Create subscription with PayPal
-    const subscriptionData = {
-      plan_id: process.env.PAYPAL_SUBSCRIPTION_PLAN_ID || 'P-PLACEHOLDER', // Will need to create this in PayPal
-      subscriber: {
-        name: { given_name: name || 'Subscriber' },
-        email_address: email
-      },
-      application_context: {
-        brand_name: 'FileSolved',
-        locale: 'en-US',
-        shipping_preference: 'NO_SHIPPING',
-        user_action: 'SUBSCRIBE_NOW',
-        return_url: returnUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/subscription/success`,
-        cancel_url: cancelUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/pricing`
-      }
-    };
+    // Get or create product and plan
+    const productId = await getOrCreateProduct(accessToken);
+    const paypalPlanId = await getOrCreatePlan(accessToken, productId);
     
-    // For now, create a pending subscription and redirect to PayPal
-    // In production, you'd use the PayPal Subscriptions API
+    // Create PayPal subscription
+    const subscriptionResponse = await fetch(`${PAYPAL_API}/v1/billing/subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': `sub-${uuidv4()}`
+      },
+      body: JSON.stringify({
+        plan_id: paypalPlanId,
+        subscriber: {
+          name: {
+            given_name: name?.split(' ')[0] || 'Subscriber',
+            surname: name?.split(' ').slice(1).join(' ') || ''
+          },
+          email_address: email
+        },
+        application_context: {
+          brand_name: 'FileSolved',
+          locale: 'en-US',
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'SUBSCRIBE_NOW',
+          payment_method: {
+            payer_selected: 'PAYPAL',
+            payee_preferred: 'IMMEDIATE_PAYMENT_REQUIRED'
+          },
+          return_url: `${FRONTEND_URL}/subscription/success`,
+          cancel_url: `${FRONTEND_URL}/pricing`
+        }
+      })
+    });
+    
+    const paypalSubscription = await subscriptionResponse.json();
+    
+    if (paypalSubscription.error) {
+      console.error('PayPal subscription error:', paypalSubscription);
+      throw new Error(paypalSubscription.error_description || 'Failed to create PayPal subscription');
+    }
+    
+    // Create local subscription record
     const subscriptionId = `sub_${uuidv4().replace(/-/g, '').substring(0, 16)}`;
     
     const subscription = new Subscription({
@@ -176,7 +321,9 @@ router.post('/create', async (req, res) => {
       planId,
       planName: plan.name,
       priceMonthly: plan.priceMonthly,
-      status: 'pending'
+      status: 'pending',
+      paypalSubscriptionId: paypalSubscription.id,
+      paypalPlanId
     });
     
     await subscription.save();
@@ -185,16 +332,17 @@ router.post('/create', async (req, res) => {
     await Analytics.create({
       event: 'subscription_initiated',
       userId: subscription.userId,
-      details: { planId, email }
+      details: { planId, email, paypalSubscriptionId: paypalSubscription.id }
     }).catch(() => {});
     
-    // For demo/development, we'll simulate activation
-    // In production, this would return a PayPal approval URL
+    // Find approval URL
+    const approvalUrl = paypalSubscription.links?.find(l => l.rel === 'approve')?.href;
+    
     res.json({
       subscriptionId,
+      paypalSubscriptionId: paypalSubscription.id,
       status: 'pending',
-      // In production: approvalUrl: paypalResponse.links.find(l => l.rel === 'approve').href
-      message: 'Subscription created. Complete payment to activate.',
+      approvalUrl,
       plan: {
         name: plan.name,
         price: `$${(plan.priceMonthly / 100).toFixed(2)}/month`
@@ -202,18 +350,20 @@ router.post('/create', async (req, res) => {
     });
   } catch (error) {
     console.error('Create subscription error:', error);
-    res.status(500).json({ error: 'Failed to create subscription' });
+    res.status(500).json({ error: error.message || 'Failed to create subscription' });
   }
 });
 
-// POST /api/subscription/activate - Activate subscription (for demo/testing)
+// POST /api/subscription/activate - Activate subscription after PayPal approval
 router.post('/activate', async (req, res) => {
   try {
-    const { subscriptionId, email, paypalSubscriptionId } = req.body;
+    const { subscriptionId, paypalSubscriptionId, email } = req.body;
     
     let subscription;
     
-    if (subscriptionId) {
+    if (paypalSubscriptionId) {
+      subscription = await Subscription.findOne({ paypalSubscriptionId });
+    } else if (subscriptionId) {
       subscription = await Subscription.findOne({ subscriptionId });
     } else if (email) {
       subscription = await Subscription.findOne({ 
@@ -226,51 +376,77 @@ router.post('/activate', async (req, res) => {
       return res.status(404).json({ error: 'Subscription not found' });
     }
     
-    // Calculate billing period (1 month)
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-    
-    subscription.status = 'active';
-    subscription.paypalSubscriptionId = paypalSubscriptionId || `pp_${uuidv4().substring(0, 12)}`;
-    subscription.startedAt = now;
-    subscription.currentPeriodStart = now;
-    subscription.currentPeriodEnd = periodEnd;
-    subscription.nextBillingDate = periodEnd;
-    subscription.updatedAt = now;
-    
-    await subscription.save();
-    
-    // Create payment record
-    const payment = new SubscriptionPayment({
-      paymentId: `spay_${uuidv4().replace(/-/g, '').substring(0, 16)}`,
-      subscriptionId: subscription.subscriptionId,
-      userId: subscription.userId,
-      amount: subscription.priceMonthly,
-      status: 'completed',
-      billingPeriodStart: now,
-      billingPeriodEnd: periodEnd
-    });
-    
-    await payment.save();
-    
-    // Track analytics
-    await Analytics.create({
-      event: 'subscription_activated',
-      userId: subscription.userId,
-      amount: subscription.priceMonthly / 100,
-      details: { planId: subscription.planId }
-    }).catch(() => {});
-    
-    res.json({
-      success: true,
-      subscription: {
-        id: subscription.subscriptionId,
-        status: subscription.status,
-        planName: subscription.planName,
-        currentPeriodEnd: subscription.currentPeriodEnd
+    // Verify subscription with PayPal
+    if (subscription.paypalSubscriptionId) {
+      const accessToken = await getPayPalAccessToken();
+      
+      const verifyResponse = await fetch(
+        `${PAYPAL_API}/v1/billing/subscriptions/${subscription.paypalSubscriptionId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      const paypalSub = await verifyResponse.json();
+      
+      if (paypalSub.status === 'ACTIVE' || paypalSub.status === 'APPROVED') {
+        // Calculate billing period
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        
+        subscription.status = 'active';
+        subscription.startedAt = now;
+        subscription.currentPeriodStart = now;
+        subscription.currentPeriodEnd = periodEnd;
+        subscription.nextBillingDate = periodEnd;
+        subscription.updatedAt = now;
+        
+        await subscription.save();
+        
+        // Create payment record
+        const payment = new SubscriptionPayment({
+          paymentId: `spay_${uuidv4().replace(/-/g, '').substring(0, 16)}`,
+          subscriptionId: subscription.subscriptionId,
+          userId: subscription.userId,
+          amount: subscription.priceMonthly,
+          status: 'completed',
+          paypalTransactionId: paypalSub.id,
+          billingPeriodStart: now,
+          billingPeriodEnd: periodEnd
+        });
+        
+        await payment.save();
+        
+        // Track analytics
+        await Analytics.create({
+          event: 'subscription_activated',
+          userId: subscription.userId,
+          amount: subscription.priceMonthly / 100,
+          details: { planId: subscription.planId, paypalStatus: paypalSub.status }
+        }).catch(() => {});
+        
+        return res.json({
+          success: true,
+          subscription: {
+            id: subscription.subscriptionId,
+            status: 'active',
+            planName: subscription.planName,
+            currentPeriodEnd: subscription.currentPeriodEnd
+          }
+        });
+      } else {
+        return res.status(400).json({ 
+          error: 'Subscription not yet approved',
+          paypalStatus: paypalSub.status
+        });
       }
-    });
+    }
+    
+    res.status(400).json({ error: 'No PayPal subscription to verify' });
   } catch (error) {
     console.error('Activate subscription error:', error);
     res.status(500).json({ error: 'Failed to activate subscription' });
@@ -297,6 +473,30 @@ router.post('/cancel', async (req, res) => {
       return res.status(404).json({ error: 'Active subscription not found' });
     }
     
+    // Cancel with PayPal
+    if (subscription.paypalSubscriptionId) {
+      try {
+        const accessToken = await getPayPalAccessToken();
+        
+        await fetch(
+          `${PAYPAL_API}/v1/billing/subscriptions/${subscription.paypalSubscriptionId}/cancel`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              reason: reason || 'Customer requested cancellation'
+            })
+          }
+        );
+      } catch (paypalError) {
+        console.error('PayPal cancel error:', paypalError);
+        // Continue with local cancellation even if PayPal fails
+      }
+    }
+    
     subscription.status = 'cancelled';
     subscription.cancelledAt = new Date();
     subscription.cancelReason = reason || '';
@@ -319,6 +519,92 @@ router.post('/cancel', async (req, res) => {
   } catch (error) {
     console.error('Cancel subscription error:', error);
     res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// POST /api/subscription/webhook - PayPal webhook handler
+router.post('/webhook', async (req, res) => {
+  try {
+    const event = req.body;
+    console.log('PayPal webhook event:', event.event_type);
+    
+    switch (event.event_type) {
+      case 'BILLING.SUBSCRIPTION.ACTIVATED':
+        // Subscription activated
+        const activatedSubId = event.resource?.id;
+        if (activatedSubId) {
+          const sub = await Subscription.findOne({ paypalSubscriptionId: activatedSubId });
+          if (sub && sub.status !== 'active') {
+            const now = new Date();
+            const periodEnd = new Date(now);
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+            
+            sub.status = 'active';
+            sub.startedAt = now;
+            sub.currentPeriodStart = now;
+            sub.currentPeriodEnd = periodEnd;
+            sub.nextBillingDate = periodEnd;
+            await sub.save();
+          }
+        }
+        break;
+        
+      case 'BILLING.SUBSCRIPTION.CANCELLED':
+        const cancelledSubId = event.resource?.id;
+        if (cancelledSubId) {
+          await Subscription.updateOne(
+            { paypalSubscriptionId: cancelledSubId },
+            { status: 'cancelled', cancelledAt: new Date() }
+          );
+        }
+        break;
+        
+      case 'BILLING.SUBSCRIPTION.EXPIRED':
+        const expiredSubId = event.resource?.id;
+        if (expiredSubId) {
+          await Subscription.updateOne(
+            { paypalSubscriptionId: expiredSubId },
+            { status: 'expired' }
+          );
+        }
+        break;
+        
+      case 'PAYMENT.SALE.COMPLETED':
+        // Recurring payment completed
+        const billingAgreementId = event.resource?.billing_agreement_id;
+        if (billingAgreementId) {
+          const sub = await Subscription.findOne({ paypalSubscriptionId: billingAgreementId });
+          if (sub) {
+            const now = new Date();
+            const periodEnd = new Date(now);
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+            
+            sub.currentPeriodStart = now;
+            sub.currentPeriodEnd = periodEnd;
+            sub.nextBillingDate = periodEnd;
+            sub.updatedAt = now;
+            await sub.save();
+            
+            // Create payment record
+            await SubscriptionPayment.create({
+              paymentId: `spay_${uuidv4().replace(/-/g, '').substring(0, 16)}`,
+              subscriptionId: sub.subscriptionId,
+              userId: sub.userId,
+              amount: sub.priceMonthly,
+              status: 'completed',
+              paypalTransactionId: event.resource?.id,
+              billingPeriodStart: now,
+              billingPeriodEnd: periodEnd
+            });
+          }
+        }
+        break;
+    }
+    
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 
@@ -347,7 +633,6 @@ router.post('/check-access', async (req, res) => {
       return res.json({ hasAccess: false, reason: 'expired' });
     }
     
-    // All tools access - grant access to everything
     res.json({ 
       hasAccess: true,
       subscription: {
