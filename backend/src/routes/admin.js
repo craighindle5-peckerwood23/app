@@ -102,8 +102,9 @@ router.get('/analytics', authenticateAdmin, async (req, res) => {
     const paidOrders = await Order.countDocuments({ status: { $in: ['paid', 'completed'] } });
     const conversionRate = totalOrders > 0 ? (paidOrders / totalOrders * 100) : 0;
 
-    // Recent orders
+    // Recent orders - with projection for performance
     const recentOrders = await Order.find()
+      .select('orderId serviceName amount status createdAt customerName customerEmail')
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
@@ -137,6 +138,7 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
     }
 
     const orders = await Order.find(query)
+      .select('orderId serviceName customerName customerEmail amount status createdAt fileName')
       .sort({ createdAt: -1 })
       .skip(parseInt(skip))
       .limit(parseInt(limit))
