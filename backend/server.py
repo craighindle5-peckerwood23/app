@@ -7,28 +7,15 @@ import subprocess
 import sys
 import os
 import signal
-import threading
-import time
+import asyncio
 import atexit
 import httpx
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Node.js server URL
 NODE_SERVER = "http://127.0.0.1:3001"
-
-# Create FastAPI app for uvicorn
-app = FastAPI(title="FileSolved Backend Proxy")
-
-# Add CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Global process reference
 node_process = None
@@ -44,14 +31,14 @@ def start_node_server():
         stderr=sys.stderr,
         env=env
     )
-    # Wait for Node.js to start
-    time.sleep(2)
+    print(f"[PROXY] Started Node.js server with PID {node_process.pid}", flush=True)
     return node_process
 
 def stop_node_server():
     """Stop the Node.js server"""
     global node_process
     if node_process:
+        print(f"[PROXY] Stopping Node.js server PID {node_process.pid}", flush=True)
         node_process.terminate()
         try:
             node_process.wait(timeout=5)
@@ -61,27 +48,58 @@ def stop_node_server():
 # Register cleanup
 atexit.register(stop_node_server)
 
-# Start Node.js server in background thread on startup
-@app.on_event("startup")
-async def startup_event():
-    thread = threading.Thread(target=start_node_server, daemon=True)
-    thread.start()
-    # Give Node.js time to start
-    time.sleep(3)
-
-@app.on_event("shutdown")
-async def shutdown_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown"""
+    print("[PROXY] Starting FileSolved Proxy Server...", flush=True)
+    # Start Node.js server
+    start_node_server()
+    # Give Node.js time to start (non-blocking)
+    await asyncio.sleep(3)
+    print("[PROXY] Proxy server ready", flush=True)
+    yield
+    # Shutdown
     stop_node_server()
 
-# Health check endpoint
+# Create FastAPI app for uvicorn with lifespan
+app = FastAPI(title="FileSolved Backend Proxy", lifespan=lifespan)
+
+# Add CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Health check endpoint - this MUST respond immediately
 @app.get("/health")
 async def health():
     return {"status": "healthy", "service": "filesolved-proxy"}
 
-# Proxy all other requests to Node.js
+# Root health check 
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "filesolved"}
+
+# Proxy all API requests to Node.js
+@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_api(request: Request, path: str):
+    """Proxy API requests to the Node.js Express server"""
+    return await proxy_request(request, f"api/{path}")
+
+# Proxy other requests to Node.js
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def proxy(request: Request, path: str):
-    """Proxy all requests to the Node.js Express server"""
+async def proxy_all(request: Request, path: str):
+    """Proxy all other requests to the Node.js Express server"""
+    # Skip health and root which are handled above
+    if path in ["health", ""]:
+        return {"status": "ok"}
+    return await proxy_request(request, path)
+
+async def proxy_request(request: Request, path: str):
+    """Common proxy logic"""
     try:
         # Build target URL
         url = f"{NODE_SERVER}/{path}"
@@ -100,11 +118,17 @@ async def proxy(request: Request, path: str):
                 content=body if body else None,
             )
         
+        # Filter response headers
+        filtered_headers = {}
+        for k, v in response.headers.items():
+            if k.lower() not in ['content-encoding', 'transfer-encoding', 'content-length']:
+                filtered_headers[k] = v
+        
         # Return response
         return Response(
             content=response.content,
             status_code=response.status_code,
-            headers=dict(response.headers),
+            headers=filtered_headers,
             media_type=response.headers.get('content-type')
         )
     except httpx.ConnectError:
@@ -114,6 +138,7 @@ async def proxy(request: Request, path: str):
             media_type="application/json"
         )
     except Exception as e:
+        print(f"[PROXY ERROR] {str(e)}", flush=True)
         return Response(
             content=f'{{"error": "Proxy error: {str(e)}"}}',
             status_code=500,
