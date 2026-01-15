@@ -190,6 +190,7 @@ router.get('/orders', authenticate, async (req, res) => {
     const { skip = 0, limit = 20 } = req.query;
 
     const orders = await Order.find({ userId: req.user.userId })
+      .select('orderId serviceName amount status createdAt fileName serviceType')
       .sort({ createdAt: -1 })
       .skip(parseInt(skip))
       .limit(parseInt(limit))

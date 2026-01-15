@@ -303,7 +303,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
     const { skip = 0, limit = 50 } = req.query;
 
     const users = await User.find({ role: 'user' })
-      .select('-password')
+      .select('userId email name role createdAt lastLogin')
       .sort({ createdAt: -1 })
       .skip(parseInt(skip))
       .limit(parseInt(limit))
