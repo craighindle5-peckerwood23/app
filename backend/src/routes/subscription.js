@@ -11,7 +11,7 @@ const PAYPAL_API = process.env.PAYPAL_MODE === 'live'
   ? 'https://api-m.paypal.com' 
   : 'https://api-m.sandbox.paypal.com';
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://filesolved-1.preview.emergentagent.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://empowerhelp.preview.emergentagent.com';
 
 // Plan configuration
 const PLAN_CONFIG = {

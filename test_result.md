@@ -436,7 +436,7 @@ agent_communication:
       2. All Express.js routes are implemented and server is running
       3. MongoDB is connected and working
       
-      API Base URL: https://filesolved-1.preview.emergentagent.com
+      API Base URL: https://empowerhelp.preview.emergentagent.com
       
       Please test:
       1. Services API (GET /api/services, GET /api/services/:id) - verified working via curl
