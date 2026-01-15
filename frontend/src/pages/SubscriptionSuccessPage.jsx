@@ -73,68 +73,84 @@ const SubscriptionSuccessPage = () => {
 
       <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-green-50 to-white py-16">
         <div className="max-w-lg mx-auto px-4 text-center">
-          {/* Success Icon */}
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-green-600" />
-          </div>
-
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">
-            Your Subscription is Active!
-          </h1>
-          
-          <p className="text-lg text-slate-600 mb-8">
-            Welcome to <strong>All Tools Access</strong>. You now have unlimited access to all 50+ FileSolved tools.
-          </p>
-
-          {subscription && (
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-8 text-left">
-              <h2 className="font-semibold text-lg mb-4">Subscription Details</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Plan</span>
-                  <span className="font-medium">{subscription.plan?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Price</span>
-                  <span className="font-medium">{subscription.plan?.priceFormatted}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Status</span>
-                  <span className="font-medium text-green-600">Active</span>
-                </div>
-                {subscription.currentPeriodEnd && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Next billing</span>
-                    <span className="font-medium">
-                      {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
+          {activating ? (
+            <>
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
               </div>
-            </div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-4">
+                Activating Your Subscription...
+              </h1>
+              <p className="text-lg text-slate-600">
+                Please wait while we confirm your payment with PayPal.
+              </p>
+            </>
+          ) : (
+            <>
+              {/* Success Icon */}
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+
+              <h1 className="text-3xl font-bold text-slate-900 mb-4">
+                Your Subscription is Active!
+              </h1>
+              
+              <p className="text-lg text-slate-600 mb-8">
+                Welcome to <strong>All Tools Access</strong>. You now have unlimited access to all 50+ FileSolved tools.
+              </p>
+
+              {subscription && (
+                <div className="bg-white rounded-xl shadow-lg p-6 mb-8 text-left">
+                  <h2 className="font-semibold text-lg mb-4">Subscription Details</h2>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Plan</span>
+                      <span className="font-medium">{subscription.plan?.name || 'All Tools Access'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Price</span>
+                      <span className="font-medium">{subscription.plan?.priceFormatted || '$5.99/month'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Status</span>
+                      <span className="font-medium text-green-600">Active</span>
+                    </div>
+                    {subscription.currentPeriodEnd && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Next billing</span>
+                        <span className="font-medium">
+                          {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Link to="/services">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3" data-testid="start-using-tools-btn">
+                    <FileText className="w-5 h-5 mr-2" />
+                    Start Using Tools
+                  </Button>
+                </Link>
+                
+                <Link to="/" className="block">
+                  <Button variant="outline" className="w-full py-3">
+                    Back to Home
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+                <h3 className="font-medium text-sm mb-2">Manage Your Subscription</h3>
+                <p className="text-xs text-slate-500">
+                  To cancel or update your subscription, email us at support@filesolved.com or visit your PayPal subscriptions dashboard.
+                </p>
+              </div>
+            </>
           )}
-
-          <div className="space-y-4">
-            <Link to="/services">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3">
-                <FileText className="w-5 h-5 mr-2" />
-                Start Using Tools
-              </Button>
-            </Link>
-            
-            <Link to="/" className="block">
-              <Button variant="outline" className="w-full py-3">
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-
-          <div className="mt-8 p-4 bg-slate-50 rounded-lg">
-            <h3 className="font-medium text-sm mb-2">Manage Your Subscription</h3>
-            <p className="text-xs text-slate-500">
-              To cancel or update your subscription, email us at support@filesolved.com or visit your PayPal subscriptions dashboard.
-            </p>
-          </div>
         </div>
       </div>
     </Layout>
