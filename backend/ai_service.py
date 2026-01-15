@@ -12,7 +12,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Load environment variables
 from dotenv import load_dotenv
-load_dotenv('/app/backend/.env')
+load_dotenv()
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
