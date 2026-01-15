@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { Layout } from "../components/Layout";
@@ -16,11 +16,7 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchOrder();
-  }, [orderId]);
-
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/orders/${orderId}`);
       setOrder(response.data);
@@ -31,7 +27,11 @@ const CheckoutPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId, navigate]);
+
+  useEffect(() => {
+    fetchOrder();
+  }, [fetchOrder]);
 
   const createPayPalOrder = async () => {
     try {

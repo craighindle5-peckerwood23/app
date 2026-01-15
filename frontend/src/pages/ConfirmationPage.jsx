@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Button } from "../components/ui/button";
@@ -12,14 +12,7 @@ const ConfirmationPage = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrder();
-    // Poll for status updates
-    const interval = setInterval(fetchOrder, 5000);
-    return () => clearInterval(interval);
-  }, [orderId]);
-
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/orders/${orderId}`);
       setOrder(response.data);
@@ -28,7 +21,14 @@ const ConfirmationPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    fetchOrder();
+    // Poll for status updates
+    const interval = setInterval(fetchOrder, 5000);
+    return () => clearInterval(interval);
+  }, [fetchOrder]);
 
   const handleDownload = async () => {
     try {
