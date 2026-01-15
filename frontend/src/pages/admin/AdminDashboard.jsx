@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { 
@@ -96,28 +96,28 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchErrors = async () => {
+  const fetchErrors = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/admin/errors`, { headers: getAuthHeaders() });
       setErrors(response.data);
     } catch (error) {
       console.error("Errors fetch error:", error);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/admin/users`, { headers: getAuthHeaders() });
       setUsers(response.data.users || []);
     } catch (error) {
       console.error("Users fetch error:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'errors') fetchErrors();
     if (activeTab === 'users') fetchUsers();
-  }, [activeTab]);
+  }, [activeTab, fetchErrors, fetchUsers]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
