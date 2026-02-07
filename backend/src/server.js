@@ -63,6 +63,17 @@ app.use('/api/', rateLimiter.general);
 app.use('/api/files', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/outputs', express.static(path.join(__dirname, '../outputs')));
 
+// Health check - root level for deployment health checks
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    service: 'filesolved',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 // Health check
 app.get('/api/', (req, res) => {
   res.json({ 
