@@ -56,11 +56,13 @@ const UploadPage = () => {
     if (currentService?.requires_extra_fields?.length > 0) {
       setShowExtraFields(true);
       // Initialize extra fields
-      const initialFields = {};
-      currentService.requires_extra_fields.forEach(field => {
-        initialFields[field] = extraFields[field] || '';
+      setExtraFields(previousFields => {
+        const initialFields = {};
+        currentService.requires_extra_fields.forEach(field => {
+          initialFields[field] = previousFields[field] || '';
+        });
+        return initialFields;
       });
-      setExtraFields(initialFields);
     } else {
       setShowExtraFields(false);
     }
