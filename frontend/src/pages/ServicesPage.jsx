@@ -292,6 +292,7 @@ const ServicesPage = () => {
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
                 Document Services
               </h1>
+              <Link className="inline-block mt-2 text-blue-700 underline" to="/tools/pdf-tools">Open PDF workspace</Link>
               <p className="mt-2 text-lg text-slate-600">
                 {services.length}+ professional services. Pay only for what you use.
               </p>

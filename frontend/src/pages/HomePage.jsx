@@ -324,7 +324,7 @@ const HomePage = () => {
                       <IconComponent className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold mb-2">{service.title}</h3>
+                      <h3 className="text-xl font-bold mb-2">{service.id === "pdf-tools" ? <Link className="underline" to={service.href}>{service.title}</Link> : service.title}</h3>
                       <p className="text-slate-400 leading-relaxed">{service.description}</p>
                     </div>
                   </div>

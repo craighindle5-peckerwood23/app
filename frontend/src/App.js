@@ -4,6 +4,7 @@ import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { Toaster } from "./components/ui/sonner";
 
 // Pages
+import { lazy, Suspense } from "react";
 import HomePage from "./pages/HomePage";
 import ServicesPage from "./pages/ServicesPage";
 import ServiceDetailPage from "./pages/ServiceDetailPage";
@@ -16,6 +17,8 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import PricingPage from "./pages/PricingPage";
 import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
+
+const PdfToolsPage = lazy(() => import("./pages/PdfToolsPage"));
 
 const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID;
 
@@ -40,6 +43,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             {/* New routes for bundles and tools - redirect to services for now */}
             <Route path="/bundles/:bundleId" element={<ServicesPage />} />
+            <Route path="/tools/pdf-tools" element={<Suspense fallback={<p role="status">Loading PDF workspace…</p>}><PdfToolsPage /></Suspense>} />
             <Route path="/tools/:toolId" element={<ServicesPage />} />
             <Route path="/case-file/new" element={<UploadPage />} />
             <Route path="/about" element={<FAQPage />} />
